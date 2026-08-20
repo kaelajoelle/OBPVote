@@ -9,7 +9,7 @@ export const story = {
       question: "Choose the Companions’ first path.",
       options: [
         { id: "enchantress", label: "Glade of Paranor — the Enchantress", nextPromptId: "poll-2-song", scriptColor: "BLOSSOM", stageColor: "#d989a6", stageLabel: "ENCHANTRESS", pageNumber: 10, stageDirection: "Follow the Glade of Paranor branch" },
-        { id: "hag", label: "Flamespun Ruins — the Hag", nextPromptId: "poll-2-song", scriptColor: "DARK GREEN", stageColor: "#1f5a42", stageLabel: "HAG", pageNumber: 7, stageDirection: "Follow the Flamespun Ruins branch" }
+        { id: "hag", label: "Flamespun Ruins — the Hag", nextPromptId: "poll-2-song", scriptColor: "OLIVE", stageColor: "#1f5a42", stageLabel: "HAG", pageNumber: 7, stageDirection: "Follow the Flamespun Ruins branch" }
       ]
     },
     {
@@ -19,7 +19,7 @@ export const story = {
       title: "Who should sing the next song?",
       question: "Choose the Companions’ storyteller.",
       options: [
-        { id: "armour-class", label: "Anaax — a bard of great renown", nextPromptId: "poll-3-initiative", scriptColor: "ORANGE", stageColor: "#ff9900", stageLabel: "ANAAX", pageNumber: 23, stageDirection: "Continue with “Armour Class” — Anaax" },
+        { id: "armour-class", label: "Anaax — a bard of great renown", nextPromptId: "poll-3-initiative", scriptColor: "TANGERINE", stageColor: "#ff9900", stageLabel: "ANAAX", pageNumber: 23, stageDirection: "Continue with “Armour Class” — Anaax" },
         { id: "hero-of-the-realm", label: "Kytius — just Kytius", nextPromptId: "poll-3-initiative", scriptColor: "CORAL", stageColor: "#e06666", stageLabel: "KYTIUS", pageNumber: 25, stageDirection: "Continue with “Hero of the Realm” — Kytius" }
       ]
     },
@@ -41,8 +41,8 @@ export const story = {
       title: "An orc reaches for a battle horn.",
       question: "What should Khulgar do?",
       options: [
-        { id: "coin-purse", label: "Pick up the coin purse", nextPromptId: "poll-4-5-vial", scriptColor: null, stageColor: "#d5aa58", stageLabel: "RING", pageNumber: 91, stageDirection: "Khulgar has the ring" },
-        { id: "run-to-camp", label: "Don’t chance it", nextPromptId: "poll-4-5-vial", scriptColor: null, stageColor: "#d5aa58", stageLabel: "NO RING", pageNumber: 91, stageDirection: "Khulgar does not have the ring" }
+        { id: "coin-purse", label: "Pick up the coin purse", nextPromptId: "poll-4-5-vial", scriptColor: Black, stageColor: "#d5aa58", stageLabel: "RING", pageNumber: 55, stageDirection: "Khulgar has the ring" },
+        { id: "run-to-camp", label: "Don’t chance it", nextPromptId: "poll-4-5-vial", scriptColor: black, stageColor: "#d5aa58", stageLabel: "NO RING", pageNumber: 55, stageDirection: "Khulgar does not have the ring" }
       ]
     },
     {
@@ -75,8 +75,8 @@ export const story = {
       title: "A caravan lies ahead.",
       question: "How should the Companions travel?",
       options: [
-        { id: "own-pace", label: "Travel at their own pace", nextPromptId: "poll-7-stories", scriptColor: null, stageColor: "#d5aa58", stageLabel: "OWN PACE", pageNumber: 91, stageDirection: "Follow the Travel at Their Own Pace direction" },
-        { id: "join-caravan", label: "Join the caravan", nextPromptId: "poll-7-stories", scriptColor: null, stageColor: "#d5aa58", stageLabel: "JOIN THE CARAVAN", pageNumber: 91, stageDirection: "Follow the Join the Caravan direction" }
+        { id: "own-pace", label: "Travel at their own pace", nextPromptId: "poll-7-stories", scriptColor: lilac, stageColor: "#d5aa58", stageLabel: "OWN PACE", pageNumber: 90, stageDirection: "Follow the Travel at Their Own Pace direction" },
+        { id: "join-caravan", label: "Join the caravan", nextPromptId: "poll-7-stories", scriptColor: duck_egg, stageColor: "#d5aa58", stageLabel: "JOIN THE CARAVAN", pageNumber: 90, stageDirection: "Follow the Join the Caravan direction" }
       ]
     },
     {
@@ -86,10 +86,10 @@ export const story = {
       title: "One Companion will tell their story.",
       question: "Whose story should the Caravan hear?",
       options: [
-        { id: "eris", label: "Eris", nextPromptId: "poll-8-song", scriptColor: "BRIGHT GREEN", stageColor: "#73b35a", stageLabel: "ERIS", pageNumber: 94, stageDirection: "Continue with Eris’s story" },
-        { id: "khulgar", label: "Khulgar", nextPromptId: "poll-8-song", scriptColor: "NAVY", stageColor: "#243a69", stageLabel: "KHULGAR", pageNumber: 95, stageDirection: "Continue with Khulgar’s story" },
-        { id: "kytius", label: "Kytius", nextPromptId: "poll-8-song", scriptColor: "DEEP PURPLE", stageColor: "#4c2d73", stageLabel: "KYTIUS", pageNumber: 96, stageDirection: "Continue with Kytius’s story" },
-        { id: "rhoswen", label: "Rhoswen", nextPromptId: "poll-8-song", scriptColor: "TEAL", stageColor: "#247b7b", stageLabel: "RHOSWEN", pageNumber: 100, stageDirection: "Continue with Rhoswen’s story" }
+        { id: "eris", label: "Eris", nextPromptId: "poll-8-song", scriptColor: "BRIGHT GREEN", stageColor: "#73b35a", stageLabel: "ERIS", pageNumber: 93, stageDirection: "Continue with Eris’s story" },
+        { id: "khulgar", label: "Khulgar", nextPromptId: "poll-8-song", scriptColor: "NAVY", stageColor: "#243a69", stageLabel: "KHULGAR", pageNumber: 94, stageDirection: "Continue with Khulgar’s story" },
+        { id: "kytius", label: "Kytius", nextPromptId: "poll-8-song", scriptColor: "DEEP PURPLE", stageColor: "#4c2d73", stageLabel: "KYTIUS", pageNumber: 95, stageDirection: "Continue with Kytius’s story" },
+        { id: "rhoswen", label: "Rhoswen", nextPromptId: "poll-8-song", scriptColor: "TEAL", stageColor: "#247b7b", stageLabel: "RHOSWEN", pageNumber: 96, stageDirection: "Continue with Rhoswen’s story" }
       ]
     },
     {
@@ -99,8 +99,8 @@ export const story = {
       title: "Choose the tale that becomes a song.",
       question: "Which song should Anaax sing?",
       options: [
-        { id: "loss-and-love", label: "“Loss and Love”", nextPromptId: null, scriptColor: null, stageColor: "#d5aa58", stageLabel: "HOW DO YOU WANT TO DO THIS", pageNumber: 108, stageDirection: "Continue with “How Do You Want To Do This?”" },
-        { id: "love-and-loss", label: "“Love and Loss”", nextPromptId: null, scriptColor: null, stageColor: "#d5aa58", stageLabel: "LA DITTY HEY", pageNumber: 110, stageDirection: "Continue with “La Ditty Hey”" }
+        { id: "loss-and-love", label: "“Loss and Love”", nextPromptId: null, scriptColor: grey, stageColor: "#d5aa58", stageLabel: "HOW DO YOU WANT TO DO THIS", pageNumber: 107, stageDirection: "Continue with “How Do You Want To Do This?”" },
+        { id: "love-and-loss", label: "“Love and Loss”", nextPromptId: null, scriptColor: burgundy, stageColor: "#d5aa58", stageLabel: "LA DITTY HEY", pageNumber: 109, stageDirection: "Continue with “La Ditty Hey”" }
       ]
     }
   ]
