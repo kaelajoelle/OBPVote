@@ -8,19 +8,19 @@ export const story = {
       title: "Where should we begin?",
       question: "Choose the Companions’ first path.",
       options: [
-        { id: "enchantress", label: "Glade of Paranor — the Enchantress", nextPromptId: "poll-2-song", scriptColor: "BLOSSOM", stageColor: "#d989a6", stageLabel: "ENCHANTRESS", pageNumber: 10, stageDirection: "Follow the Glade of Paranor branch" },
-        { id: "hag", label: "Flamespun Ruins — the Hag", nextPromptId: "poll-2-song", scriptColor: "OLIVE", stageColor: "#1f5a42", stageLabel: "HAG", pageNumber: 7, stageDirection: "Follow the Flamespun Ruins branch" }
+        { id: "enchantress", label: "Glade of Paranor — The Enchantress", nextPromptId: "poll-2-song", scriptColor: "BLOSSOM", stageColor: "#d989a6", stageLabel: "ENCHANTRESS", pageNumber: 10, stageDirection: "Follow the Glade of Paranor branch" },
+        { id: "hag", label: "Flamespun Ruins — The Hag", nextPromptId: "poll-2-song", scriptColor: "OLIVE", stageColor: "#1f5a42", stageLabel: "HAG", pageNumber: 7, stageDirection: "Follow the Flamespun Ruins branch" }
       ]
     },
     {
       id: "poll-2-song",
       pollNumber: "2",
       operatorLabel: "Anaax or Kytius song",
-      title: "Who should sing the next song?",
+      title: "Who should perform?",
       question: "Choose the Companions’ storyteller.",
       options: [
-        { id: "armour-class", label: "Anaax — a bard of great renown", nextPromptId: "poll-3-initiative", scriptColor: "TANGERINE", stageColor: "#ff9900", stageLabel: "ANAAX", pageNumber: 23, stageDirection: "Continue with “Armour Class” — Anaax" },
-        { id: "hero-of-the-realm", label: "Kytius — just Kytius", nextPromptId: "poll-3-initiative", scriptColor: "CORAL", stageColor: "#e06666", stageLabel: "KYTIUS", pageNumber: 25, stageDirection: "Continue with “Hero of the Realm” — Kytius" }
+        { id: "armour-class", label: "Anaax — A bard of great renown", nextPromptId: "poll-3-initiative", scriptColor: "TANGERINE", stageColor: "#ff9900", stageLabel: "ANAAX", pageNumber: 23, stageDirection: "Continue with “Armour Class” — Anaax" },
+        { id: "hero-of-the-realm", label: "Kytius — Just Kytius", nextPromptId: "poll-3-initiative", scriptColor: "CORAL", stageColor: "#e06666", stageLabel: "KYTIUS", pageNumber: 25, stageDirection: "Continue with “Hero of the Realm” — Kytius" }
       ]
     },
     {
