@@ -232,6 +232,7 @@ async function operatorState(env: Env, origin: string) {
     manualOutcomeId: session.manual_outcome_id,
     joinUrl: origin,
     stageUrl: `${origin}/stage.html`,
+    resultsUrl: `${origin}/results.html`,
     history: enrichHistory(history),
     archives: await getArchives(env),
     prompts: story.prompts.map((item) => ({

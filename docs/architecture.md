@@ -2,7 +2,7 @@
 
 ## Decision
 
-Use one edge-hosted web service that serves three browser views and owns a single database-backed performance session.
+Use one edge-hosted web service that serves four browser views and owns a single database-backed performance session.
 
 ```text
 Audience phones ──poll/submit──┐
@@ -17,6 +17,7 @@ This is intentionally a prototype architecture for the September 21 readthrough.
 - `/`: audience view. Shows the current open choice, accepts one vote per browser per round, and displays the chosen result after the operator reveals it.
 - `/operator.html`: operator view. Opens and closes voting, sees live totals, chooses a manual outcome when needed, reveals the result, advances the branch, and reviews current and archived runs.
 - `/stage.html`: read-only backstage view. Keeps the latest approved script colour or direction visible for cast and stage management without exposing manual-override information.
+- `/results.html`: protected results view. Loads current and archived totals on demand so archive accordions are not disrupted by live polling.
 
 ## Data and state
 

@@ -27,7 +27,7 @@ The initial repository plan is preserved in these three surfaces:
 - **Show Control:** current vote, open, close, results, and choosing the next vote.
 - **Shared System:** current performance, vote definitions, vote submissions, and current voting state.
 
-The current scaffold implements these as an audience page, operator page, backstage page, and one shared hosted voting session.
+The current scaffold implements these as audience, operator, backstage, and results pages backed by one shared hosted voting session.
 
 ## Handy page list
 
@@ -36,8 +36,9 @@ The current scaffold implements these as an audience page, operator page, backst
 | `/` | Audience voting, vote confirmation, and revealed result | Public / QR |
 | `/operator.html` | Load, open, close, resolve, reveal, advance, and review results | Show key |
 | `/stage.html` | Large auto-updating script colour or direction for cast and stage management | Show key |
+| `/results.html` | Current and archived run totals that refresh only on request | Show key |
 
-Current-run and past-run totals are under **Results history** on the operator page. **Archive & reset** stores the completed run before returning the show to Poll 1.
+The operator page links to **Results history** in a new tab. Its archived-run accordions stay open because the results page refreshes only when **Refresh results** is pressed. **Archive & reset** stores the completed run before returning the show to Poll 1.
 
 ## Run locally
 
@@ -53,6 +54,7 @@ Open:
 - Audience: `http://localhost:5173`
 - Operator: `http://localhost:5173/operator.html`
 - Backstage: `http://localhost:5173/stage.html`
+- Results: `http://localhost:5173/results.html`
 
 If `OPERATOR_KEY` is omitted, local development uses `rehearsal`. The hosted deployment uses a configured rehearsal key. Always set a different value for a production show.
 
@@ -76,7 +78,7 @@ The app now contains Polls 1–8 from the September 21 script plus the script’
 
 The audience-facing wording is a concise adaptation of the supplied script. Tory supplies and approves final artistic/performance requirements and exact choice wording; Kaela facilitates and product-manages the prototype and readiness process. Technical ownership remains unassigned until explicitly decided.
 
-The backstage page intentionally does not identify whether an outcome was manually selected. That operational detail is recorded only in the operator’s results history. Script colours are shown only where the supplied script explicitly names one; other branches display a plain-language direction until Tory approves additional colour mappings.
+The backstage page intentionally does not identify whether an outcome was manually selected. That operational detail is recorded only on the protected results page. Script colours are shown only where the supplied script explicitly names one; other branches display a plain-language direction until Tory approves additional colour mappings.
 
 To make an approved wording or routing change, edit `src/story.js`. Each prompt needs a stable `id`, audience-facing copy, and options. Each option’s `nextPromptId` points to another prompt or is `null` when that path ends.
 

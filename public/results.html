@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#132f2a" />
+    <title>OBP Vote — Results History</title>
+    <link rel="icon" href="/obp-logo.png" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell operator-shell results-shell">
+      <header class="brand compact operator-brand">
+        <img class="brand-logo compact-logo" src="/obp-logo.png" alt="Off the Beaten Path — An Epic Musical" />
+        <div>
+          <p class="eyebrow">Off the Beaten Path</p>
+          <h1>Results history</h1>
+          <p class="operator-intro">Review current and archived voting runs without the live operator screen refreshing underneath you.</p>
+        </div>
+      </header>
+      <section id="results-login" class="card login-card">
+        <label for="results-key">Show key</label>
+        <div class="inline-control">
+          <input id="results-key" type="password" autocomplete="current-password" />
+          <button id="results-connect" type="button">Connect</button>
+        </div>
+      </section>
+      <section id="results-page" class="card" hidden>
+        <div class="results-toolbar">
+          <span id="last-refreshed">Loaded just now</span>
+          <button id="refresh-results" class="secondary" type="button">Refresh results</button>
+        </div>
+        <div id="results-content"></div>
+      </section>
+    </main>
+    <script type="module" src="/results.js"></script>
+  </body>
+</html>

@@ -21,36 +21,9 @@ async function api(action = "state", body = null) {
   return result;
 }
 
-function formatDate(timestamp) {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(timestamp));
-}
-
-function renderHistoryEntries(entries) {
-  if (!entries.length) return `<p class="empty-note">Completed votes will appear here after you reveal and advance them.</p>`;
-  return entries.map((entry) => `
-    <article class="history-item">
-      <div class="history-heading">
-        <strong>Poll ${escapeHtml(entry.pollNumber)} — ${escapeHtml(entry.promptLabel)}</strong>
-        <span>${entry.totalVotes} vote${entry.totalVotes === 1 ? "" : "s"}</span>
-      </div>
-      <p>Chosen: <strong>${escapeHtml(entry.winnerLabel)}</strong>${entry.manual ? ` <span class="badge">Manual outcome</span>` : ""}</p>
-      <ul>${entry.voteRows.map((vote) => `<li><span>${escapeHtml(vote.label)}</span><strong>${vote.count}</strong></li>`).join("")}</ul>
-    </article>`).join("");
-}
-
-function renderArchives(archives) {
-  if (!archives.length) return `<p class="empty-note">Past runs will appear after you use Archive &amp; reset.</p>`;
-  return archives.map((archive) => `
-    <details class="archive-run">
-      <summary>${escapeHtml(formatDate(archive.endedAt))} — ${archive.totalVotes} total votes</summary>
-      ${renderHistoryEntries(archive.history)}
-    </details>`).join("");
-}
-
 function render(state) {
   lastState = state;
   const prompt = state.prompt;
-  const historyWasOpen = panel.querySelector("#history-panel")?.open;
   const maxVotes = Math.max(1, ...Object.values(state.results || {}));
   const canLoadPrompt = ["ready", "complete"].includes(state.status);
   const promptOptions = state.prompts.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === prompt?.id ? "selected" : ""}>Poll ${escapeHtml(item.pollNumber)} — ${escapeHtml(item.operatorLabel)}${item.special ? " (conditional)" : ""}</option>`).join("");
@@ -88,14 +61,8 @@ function render(state) {
     <nav class="quick-links" aria-label="Show pages">
       <a href="${escapeHtml(state.joinUrl)}" target="_blank" rel="noreferrer"><span>Audience page</span><small>Voting and result reveal</small></a>
       <a href="${escapeHtml(state.stageUrl)}" target="_blank" rel="noreferrer"><span>Backstage display</span><small>Cast and stage-manager direction</small></a>
+      <a href="${escapeHtml(state.resultsUrl)}" target="_blank" rel="noreferrer"><span>Results history</span><small>Current and archived run totals</small></a>
     </nav>
-    <details id="history-panel" class="history-panel" ${historyWasOpen ? "open" : ""}>
-      <summary>Results history</summary>
-      <h3>Current run</h3>
-      ${renderHistoryEntries(state.history)}
-      <h3>Past runs</h3>
-      ${renderArchives(state.archives)}
-    </details>
     <aside class="join-panel">
       <div><span class="eyebrow">Audience join link</span><a href="${escapeHtml(state.joinUrl)}">${escapeHtml(state.joinUrl)}</a></div>
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(state.joinUrl)}" alt="QR code for the audience join link" />
