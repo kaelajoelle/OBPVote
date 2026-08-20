@@ -41,6 +41,10 @@ Do not start before collecting readthrough observations.
 2. Review whether the copy-ready summary and CSV are sufficient or need a formatted PDF/integration.
 3. Decide whether realtime push is worth replacing one-second polling.
 4. Convert validated needs into a production roadmap.
+5. **Add a Show Journey Bingo card after audience login is available.**
+   - Let returning Adventurers track paths or outcomes they have encountered across multiple performances.
+   - Define the bingo squares, spoiler rules, and any completion reward before implementation.
+   - Keep login, accounts, and cross-show tracking outside the readthrough MVP.
 
 ### Audience experience pass — implemented, awaiting rehearsal acceptance
 
