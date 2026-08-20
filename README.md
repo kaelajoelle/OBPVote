@@ -12,6 +12,9 @@ Included:
 - live result totals;
 - branch advancement from the winning or manually selected outcome;
 - operator selection of any scripted poll for rehearsal recovery or cueing;
+- a deliberate result reveal on audience phones;
+- a read-only, auto-updating backstage direction display;
+- archived vote totals and manual-outcome tracking after each run;
 - reset and manual fallback.
 
 Not included: accounts, payments, analytics, ticketing, durable results, simultaneous performances, or a script editor.
@@ -24,7 +27,17 @@ The initial repository plan is preserved in these three surfaces:
 - **Show Control:** current vote, open, close, results, and choosing the next vote.
 - **Shared System:** current performance, vote definitions, vote submissions, and current voting state.
 
-The current scaffold implements these as one audience page, one operator page, and one shared hosted voting session.
+The current scaffold implements these as an audience page, operator page, backstage page, and one shared hosted voting session.
+
+## Handy page list
+
+| Page | Purpose | Access |
+| --- | --- | --- |
+| `/` | Audience voting, vote confirmation, and revealed result | Public / QR |
+| `/operator.html` | Load, open, close, resolve, reveal, advance, and review results | Show key |
+| `/stage.html` | Large auto-updating script colour or direction for cast and stage management | Show key |
+
+Current-run and past-run totals are under **Results history** on the operator page. **Archive & reset** stores the completed run before returning the show to Poll 1.
 
 ## Run locally
 
@@ -37,8 +50,9 @@ npm run dev
 
 Open:
 
-- Audience: `http://localhost:3000`
-- Operator: `http://localhost:3000/operator.html`
+- Audience: `http://localhost:5173`
+- Operator: `http://localhost:5173/operator.html`
+- Backstage: `http://localhost:5173/stage.html`
 
 If `OPERATOR_KEY` is omitted, local development uses `rehearsal`. The hosted deployment uses a configured rehearsal key. Always set a different value for a production show.
 
@@ -49,8 +63,10 @@ If `OPERATOR_KEY` is omitted, local development uses `rehearsal`. The hosted dep
 3. The operator opens the current vote on the stage cue.
 4. Audience members make one choice each.
 5. The operator closes voting and reads the totals.
-6. If there is a clear winner, advance. For a tie, empty vote, or manual fallback, choose an outcome first and then advance.
-7. Repeat until the scripted path ends.
+6. For a tie, empty vote, or manual fallback, choose an outcome.
+7. Press **Reveal result** to update audience phones and the backstage direction display.
+8. Press **Advance to next vote** when the performance is ready to continue.
+9. At the end of a rehearsal or show, use **Archive & reset** to preserve the totals and manual-outcome record.
 
 If the network fails, collect the choice in the room, close the vote, use **Choose outcome**, and continue. The visible join URL is the fallback if the external QR image service is unavailable.
 
@@ -59,6 +75,8 @@ If the network fails, collect the choice in the room, close the vote, use **Choo
 The app now contains Polls 1–8 from the September 21 script plus the script’s conditional **OBP TPK Poll 4.5**. The operator can load any poll directly, so a missed cue or rehearsal jump does not require replaying earlier votes.
 
 The audience-facing wording is a concise adaptation of the supplied script. Tory supplies and approves final artistic/performance requirements and exact choice wording; Kaela facilitates and product-manages the prototype and readiness process. Technical ownership remains unassigned until explicitly decided.
+
+The backstage page intentionally does not identify whether an outcome was manually selected. That operational detail is recorded only in the operator’s results history. Script colours are shown only where the supplied script explicitly names one; other branches display a plain-language direction until Tory approves additional colour mappings.
 
 To make an approved wording or routing change, edit `src/story.js`. Each prompt needs a stable `id`, audience-facing copy, and options. Each option’s `nextPromptId` points to another prompt or is `null` when that path ends.
 
@@ -69,6 +87,7 @@ npm test
 ```
 
 See [MVP architecture](docs/architecture.md) and the [issue/milestone plan](docs/issue-plan.md).
+Use the [rehearsal test checklist](docs/rehearsal-test-checklist.md) for the first multi-phone run-through.
 
 ## Repository
 

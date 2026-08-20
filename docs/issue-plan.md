@@ -17,7 +17,7 @@ Target: September 21. Exit condition: the company completes a timed rehearsal us
    - Done when five unrelated phones can join from the QR code on venue Wi-Fi/cellular.
 4. **Run an end-to-end operator rehearsal**
    - Owner: Kaela facilitates; Tory validates show timing; technical owner supports.
-   - Done when open, vote, close, result, advance, tie override, and reset are exercised.
+   - Done when open, vote, close, manual fallback, reveal, backstage direction, advance, archive, and reset are exercised.
 5. **Write and print the fallback runbook**
    - Owner: Kaela facilitates; Tory confirms the in-room cueing.
    - Done when the operator can continue by show of hands/manual override after disconnecting the network.
@@ -34,7 +34,7 @@ Target: September 21. Exit condition: the company completes a timed rehearsal us
 Do not start before collecting readthrough observations.
 
 1. Decide technical ownership and hosting responsibility.
-2. Decide whether persistent results or multiple performances are actually needed.
+2. Review whether the simple archived result summaries are sufficient or need export/multiple simultaneous performances.
 3. Decide whether realtime push is worth replacing one-second polling.
 4. Convert validated needs into a production roadmap.
 

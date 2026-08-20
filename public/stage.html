@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#132f2a" />
+    <title>OBP Vote — Backstage Direction</title>
+    <link rel="icon" href="/obp-logo.png" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell stage-shell">
+      <header class="brand stage-brand">
+        <img class="brand-logo compact-logo" src="/obp-logo.png" alt="Off the Beaten Path — An Epic Musical" />
+        <div>
+          <p class="eyebrow">Off the Beaten Path</p>
+          <h1>Backstage direction</h1>
+          <p class="operator-intro">A simple, auto-updating path display for the cast and stage manager.</p>
+        </div>
+      </header>
+      <section id="stage-login" class="card login-card">
+        <label for="stage-key">Show key</label>
+        <div class="inline-control">
+          <input id="stage-key" type="password" autocomplete="current-password" />
+          <button id="stage-connect" type="button">Connect</button>
+        </div>
+      </section>
+      <section id="stage-display" hidden aria-live="polite"></section>
+    </main>
+    <script type="module" src="/stage.js"></script>
+  </body>
+</html>

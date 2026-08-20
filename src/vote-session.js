@@ -42,8 +42,14 @@ export class VoteSession {
     this.manualOutcomeId = optionId;
   }
 
+  reveal() {
+    if (this.status !== "closed") throw new Error("Close the vote before revealing the result.");
+    if (!this.winnerId()) throw new Error("Choose a manual outcome to resolve a tie or empty vote.");
+    this.status = "revealed";
+  }
+
   selectPrompt(promptId) {
-    if (this.status === "open") throw new Error("Close the current vote before loading another one.");
+    if (!["ready", "complete"].includes(this.status)) throw new Error("Finish the current vote before loading another one.");
     if (!this.story.prompts.some((prompt) => prompt.id === promptId)) throw new Error("That vote is not available.");
     this.currentPromptId = promptId;
     this.status = "ready";
@@ -67,7 +73,7 @@ export class VoteSession {
   }
 
   advance() {
-    if (this.status !== "closed") throw new Error("Close the vote before advancing.");
+    if (this.status !== "revealed") throw new Error("Reveal the result before advancing.");
     const winnerId = this.winnerId();
     if (!winnerId) throw new Error("Choose a manual outcome to resolve a tie or empty vote.");
     const option = this.prompt.options.find((item) => item.id === winnerId);
@@ -79,10 +85,13 @@ export class VoteSession {
   }
 
   publicState(audienceId = null) {
+    const winnerId = this.status === "revealed" ? this.winnerId() : null;
+    const revealedOutcome = winnerId ? this.prompt.options.find((option) => option.id === winnerId) : null;
     return {
       status: this.status,
       prompt: this.prompt,
-      hasVoted: audienceId ? this.votes.has(audienceId) : false
+      hasVoted: audienceId ? this.votes.has(audienceId) : false,
+      revealedOutcome: revealedOutcome ? { id: revealedOutcome.id, label: revealedOutcome.label } : null
     };
   }
 

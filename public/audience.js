@@ -11,6 +11,16 @@ function escapeHtml(value) {
 }
 
 function render(state) {
+  if (state.status === "revealed" && state.revealedOutcome) {
+    card.innerHTML = `
+      <p class="status success">The audience has chosen</p>
+      <div class="result-reveal">
+        <span>The path continues with</span>
+        <h2>${escapeHtml(state.revealedOutcome.label)}</h2>
+      </div>
+      <p>Watch the stage as your choice becomes part of the story.</p>`;
+    return;
+  }
   if (state.status === "complete") {
     card.innerHTML = `<p class="status">The path is chosen.</p><h2>Thank you, adventurers.</h2>`;
     return;

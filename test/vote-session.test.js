@@ -18,6 +18,7 @@ test("advances through the winning branch", () => {
   session.castVote("b", "hag");
   session.castVote("c", "enchantress");
   session.close();
+  session.reveal();
   session.advance();
   assert.equal(session.currentPromptId, "poll-2-song");
   assert.equal(session.status, "ready");
@@ -31,9 +32,23 @@ test("manual outcome resolves a tie and is recorded", () => {
   session.close();
   assert.equal(session.winnerId(), null);
   session.setManualOutcome("enchantress");
+  session.reveal();
   session.advance();
   assert.equal(session.currentPromptId, "poll-2-song");
   assert.equal(session.history[0].manual, true);
+});
+
+test("audience sees the chosen result only after the operator reveals it", () => {
+  const session = new VoteSession(story);
+  session.open();
+  session.castVote("a", "hag");
+  session.close();
+  assert.equal(session.publicState("a").revealedOutcome, null);
+  session.reveal();
+  assert.deepEqual(session.publicState("a").revealedOutcome, {
+    id: "hag",
+    label: "Flamespun Ruins — the Hag"
+  });
 });
 
 test("contains the eight numbered script polls plus the conditional 4.5 vote", () => {
@@ -46,5 +61,5 @@ test("operator can load any scripted vote while voting is not open", () => {
   assert.equal(session.currentPromptId, "poll-7-stories");
   assert.equal(session.status, "ready");
   session.open();
-  assert.throws(() => session.selectPrompt("poll-8-song"), /Close the current vote/);
+  assert.throws(() => session.selectPrompt("poll-8-song"), /Finish the current vote/);
 });

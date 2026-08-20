@@ -16,3 +16,10 @@ export const votes = sqliteTable("votes", {
 }, (table) => [
   primaryKey({ columns: [table.promptId, table.audienceId] })
 ]);
+
+export const performanceArchive = sqliteTable("performance_archive", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  endedAt: integer("ended_at").notNull(),
+  totalVotes: integer("total_votes").notNull(),
+  historyJson: text("history_json").notNull()
+});
