@@ -51,6 +51,14 @@ async function ensureDatabase(env: Env) {
 async function getSession(env: Env) {
   const row = await env.DB.prepare("SELECT * FROM performance_session WHERE id = 1").first<SessionRow>();
   if (!row) throw new Error("The performance session is unavailable.");
+  if (row.current_prompt_id && !promptById(row.current_prompt_id)) {
+    await env.DB.prepare(`UPDATE performance_session
+      SET current_prompt_id = ?, status = 'ready', manual_outcome_id = NULL, updated_at = ? WHERE id = 1`)
+      .bind(story.startPromptId, Date.now()).run();
+    row.current_prompt_id = story.startPromptId;
+    row.status = "ready";
+    row.manual_outcome_id = null;
+  }
   return row;
 }
 
@@ -98,7 +106,13 @@ async function operatorState(env: Env, origin: string) {
     winnerId: winnerId(results, session.manual_outcome_id),
     manualOutcomeId: session.manual_outcome_id,
     joinUrl: origin,
-    history: JSON.parse(session.history_json || "[]")
+    history: JSON.parse(session.history_json || "[]"),
+    prompts: story.prompts.map((item) => ({
+      id: item.id,
+      pollNumber: item.pollNumber,
+      operatorLabel: item.operatorLabel,
+      special: Boolean("special" in item && item.special)
+    }))
   };
 }
 
@@ -172,6 +186,12 @@ async function handleApi(request: Request, env: Env) {
     await env.DB.prepare(`UPDATE performance_session
       SET current_prompt_id = ?, status = ?, manual_outcome_id = NULL, history_json = ?, updated_at = ? WHERE id = 1`)
       .bind(option.nextPromptId, option.nextPromptId ? "ready" : "complete", JSON.stringify(history), now).run();
+  } else if (action === "select") {
+    if (session.status === "open") return json({ error: "Close the current vote before loading another one." }, 400);
+    if (!story.prompts.some((item) => item.id === body.promptId)) return json({ error: "That vote is not available." }, 400);
+    await env.DB.prepare(`UPDATE performance_session
+      SET current_prompt_id = ?, status = 'ready', manual_outcome_id = NULL, updated_at = ? WHERE id = 1`)
+      .bind(body.promptId, now).run();
   } else if (action === "reset") {
     await env.DB.batch([
       env.DB.prepare("DELETE FROM votes"),

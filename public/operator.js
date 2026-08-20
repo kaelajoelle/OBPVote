@@ -23,6 +23,7 @@ async function api(action = "state", body = null) {
 function render(state) {
   const prompt = state.prompt;
   const maxVotes = Math.max(1, ...Object.values(state.results || {}));
+  const promptOptions = state.prompts.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === prompt?.id ? "selected" : ""}>Poll ${escapeHtml(item.pollNumber)} — ${escapeHtml(item.operatorLabel)}${item.special ? " (conditional)" : ""}</option>`).join("");
   const results = prompt?.options.map((option) => {
     const count = state.results[option.id] || 0;
     const selected = state.manualOutcomeId === option.id;
@@ -35,6 +36,14 @@ function render(state) {
 
   panel.innerHTML = `
     <div class="operator-topline"><span class="status">${escapeHtml(state.status)}</span><strong>${state.totalVotes} total votes</strong></div>
+    <section class="cue-control">
+      <label for="prompt-picker">Vote to load on audience phones</label>
+      <div class="inline-control">
+        <select id="prompt-picker" ${state.status === "open" ? "disabled" : ""}>${promptOptions}</select>
+        <button class="secondary" data-action="select" ${state.status === "open" ? "disabled" : ""}>Load selected vote</button>
+      </div>
+      <p class="fine-print">Loading a vote puts audience phones on standby. Press <strong>Open vote</strong> at the stage cue.</p>
+    </section>
     ${prompt ? `<h2>${escapeHtml(prompt.title)}</h2><p>${escapeHtml(prompt.question)}</p>` : `<h2>Story complete</h2>`}
     <div class="results">${results}</div>
     <div class="operator-actions">
@@ -71,7 +80,10 @@ panel.addEventListener("click", async (event) => {
   if (!button || button.disabled) return;
   try {
     button.disabled = true;
-    render(await api(button.dataset.action, button.dataset.optionId ? { optionId: button.dataset.optionId } : {}));
+    let body = {};
+    if (button.dataset.optionId) body = { optionId: button.dataset.optionId };
+    if (button.dataset.action === "select") body = { promptId: panel.querySelector("#prompt-picker").value };
+    render(await api(button.dataset.action, body));
   } catch (error) {
     alert(error.message);
     button.disabled = false;
@@ -80,7 +92,7 @@ panel.addEventListener("click", async (event) => {
 
 if (operatorKey) connect();
 setInterval(async () => {
-  if (!panel.hidden) {
+  if (!panel.hidden && document.activeElement?.id !== "prompt-picker") {
     try { render(await api()); } catch { /* keep last-known state visible */ }
   }
 }, 1000);

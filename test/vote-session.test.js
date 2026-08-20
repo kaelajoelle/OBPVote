@@ -6,32 +6,45 @@ import { VoteSession } from "../src/vote-session.js";
 test("accepts one vote per audience browser in an open round", () => {
   const session = new VoteSession(story);
   session.open();
-  session.castVote("browser-a", "lanterns");
-  assert.equal(session.results().lanterns, 1);
-  assert.throws(() => session.castVote("browser-a", "river"), /already voted/);
+  session.castVote("browser-a", "enchantress");
+  assert.equal(session.results().enchantress, 1);
+  assert.throws(() => session.castVote("browser-a", "hag"), /already voted/);
 });
 
 test("advances through the winning branch", () => {
   const session = new VoteSession(story);
   session.open();
-  session.castVote("a", "river");
-  session.castVote("b", "river");
-  session.castVote("c", "lanterns");
+  session.castVote("a", "hag");
+  session.castVote("b", "hag");
+  session.castVote("c", "enchantress");
   session.close();
   session.advance();
-  assert.equal(session.currentPromptId, "bridge-choice");
+  assert.equal(session.currentPromptId, "poll-2-song");
   assert.equal(session.status, "ready");
 });
 
 test("manual outcome resolves a tie and is recorded", () => {
   const session = new VoteSession(story);
   session.open();
-  session.castVote("a", "river");
-  session.castVote("b", "lanterns");
+  session.castVote("a", "hag");
+  session.castVote("b", "enchantress");
   session.close();
   assert.equal(session.winnerId(), null);
-  session.setManualOutcome("lanterns");
+  session.setManualOutcome("enchantress");
   session.advance();
-  assert.equal(session.currentPromptId, "gate-choice");
+  assert.equal(session.currentPromptId, "poll-2-song");
   assert.equal(session.history[0].manual, true);
+});
+
+test("contains the eight numbered script polls plus the conditional 4.5 vote", () => {
+  assert.deepEqual(story.prompts.map((prompt) => prompt.pollNumber), ["1", "2", "3", "4", "4.5", "5", "6", "7", "8"]);
+});
+
+test("operator can load any scripted vote while voting is not open", () => {
+  const session = new VoteSession(story);
+  session.selectPrompt("poll-7-stories");
+  assert.equal(session.currentPromptId, "poll-7-stories");
+  assert.equal(session.status, "ready");
+  session.open();
+  assert.throws(() => session.selectPrompt("poll-8-song"), /Close the current vote/);
 });

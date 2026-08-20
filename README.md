@@ -11,6 +11,7 @@ Included:
 - operator controls to open and close voting;
 - live result totals;
 - branch advancement from the winning or manually selected outcome;
+- operator selection of any scripted poll for rehearsal recovery or cueing;
 - reset and manual fallback.
 
 Not included: accounts, payments, analytics, ticketing, durable results, simultaneous performances, or a script editor.
@@ -44,19 +45,22 @@ If `OPERATOR_KEY` is omitted, local development uses `rehearsal`. The hosted dep
 ## Rehearsal flow
 
 1. The operator connects with the rehearsal key and displays the join QR/link.
-2. The operator opens the current vote on the stage cue.
-3. Audience members make one choice each.
-4. The operator closes voting and reads the totals.
-5. If there is a clear winner, advance. For a tie, empty vote, or manual fallback, choose an outcome first and then advance.
-6. Repeat until the scripted path ends.
+2. The operator loads the scripted poll needed for the next cue. Audience phones remain on standby.
+3. The operator opens the current vote on the stage cue.
+4. Audience members make one choice each.
+5. The operator closes voting and reads the totals.
+6. If there is a clear winner, advance. For a tie, empty vote, or manual fallback, choose an outcome first and then advance.
+7. Repeat until the scripted path ends.
 
 If the network fails, collect the choice in the room, close the vote, use **Choose outcome**, and continue. The visible join URL is the fallback if the external QR image service is unavailable.
 
 ## Configure choices
 
-Edit `src/story.js`. Each prompt needs a stable `id`, audience-facing copy, and options. Each option’s `nextPromptId` points to another prompt or is `null` when that path ends.
+The app now contains Polls 1–8 from the September 21 script plus the script’s conditional **OBP TPK Poll 4.5**. The operator can load any poll directly, so a missed cue or rehearsal jump does not require replaying earlier votes.
 
-The sample story is placeholder content only. Tory supplies and approves artistic/performance requirements and exact choice wording. Kaela facilitates/product-manages the prototype and readiness process. Technical ownership remains unassigned until explicitly decided.
+The audience-facing wording is a concise adaptation of the supplied script. Tory supplies and approves final artistic/performance requirements and exact choice wording; Kaela facilitates and product-manages the prototype and readiness process. Technical ownership remains unassigned until explicitly decided.
+
+To make an approved wording or routing change, edit `src/story.js`. Each prompt needs a stable `id`, audience-facing copy, and options. Each option’s `nextPromptId` points to another prompt or is `null` when that path ends.
 
 ## Verify
 

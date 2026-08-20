@@ -42,6 +42,15 @@ export class VoteSession {
     this.manualOutcomeId = optionId;
   }
 
+  selectPrompt(promptId) {
+    if (this.status === "open") throw new Error("Close the current vote before loading another one.");
+    if (!this.story.prompts.some((prompt) => prompt.id === promptId)) throw new Error("That vote is not available.");
+    this.currentPromptId = promptId;
+    this.status = "ready";
+    this.votes.clear();
+    this.manualOutcomeId = null;
+  }
+
   results() {
     const counts = Object.fromEntries(this.prompt?.options.map((option) => [option.id, 0]) ?? []);
     for (const optionId of this.votes.values()) counts[optionId] += 1;
