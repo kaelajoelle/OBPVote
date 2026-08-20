@@ -1,0 +1,15 @@
+{
+  "name": "obp-vote",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lean audience voting prototype for Off the Beaten Path.",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
