@@ -12,12 +12,14 @@ Included:
 - live result totals;
 - branch advancement from the winning or manually selected outcome;
 - operator selection of any scripted poll for rehearsal recovery or cueing;
-- a deliberate result reveal on audience phones;
-- a read-only, auto-updating backstage direction display;
+- a deliberate personal-choice confirmation on audience phones after reveal;
+- a downloadable PNG keepsake of the completed Tonight’s Path summary;
+- a read-only, auto-updating Stage Direction display with connection health and a final full-show path;
+- an operator Show Mode with connection health, a vote timer, explicit cue actions, and fallback guidance;
 - archived vote totals and manual-outcome tracking after each run;
 - reset and manual fallback.
 
-Not included: accounts, payments, analytics, ticketing, durable results, simultaneous performances, or a script editor.
+Not included: accounts, payments, analytics beyond simple run totals, ticketing, long-term production reporting, simultaneous performances, or a script editor.
 
 ## Prototype surfaces
 
@@ -27,15 +29,15 @@ The initial repository plan is preserved in these three surfaces:
 - **Show Control:** current vote, open, close, results, and choosing the next vote.
 - **Shared System:** current performance, vote definitions, vote submissions, and current voting state.
 
-The current scaffold implements these as audience, operator, backstage, and results pages backed by one shared hosted voting session.
+The current scaffold implements these as audience, operator, Stage Direction, and results pages backed by one shared hosted voting session.
 
 ## Handy page list
 
 | Page | Purpose | Access |
 | --- | --- | --- |
-| `/` | Audience voting, vote confirmation, and revealed result | Public / QR |
-| `/operator.html` | Load, open, close, skip, resolve, reveal, advance, and review results | Show key |
-| `/stage.html` | Full-screen branch name, script colour, page number, and matching outline | Show key |
+| `/` | Audience voting, personal-choice confirmation, final Tonight’s Path summary, and PNG keepsake download | Public / QR |
+| `/operator.html` | Setup and simplified Show Mode for loading, opening, closing, resolving, revealing, advancing, and recovery | Show key |
+| `/stage.html` | Full-screen Stage Direction, script colour, page number, matching outline, connection health, and final Tonight’s Path | Show key |
 | `/results.html` | Current and archived run totals that refresh only on request | Show key |
 
 The operator page links to **Results history** in a new tab. Its archived-run accordions stay open because the results page refreshes only when **Refresh results** is pressed. **Archive & reset** stores the completed run before returning the show to Poll 1.
@@ -67,11 +69,12 @@ If `OPERATOR_KEY` is omitted, local development uses `rehearsal`. The hosted dep
    - If the poll is not needed, the operator can press **Skip this poll** and confirm. No result is recorded.
 5. The operator closes voting and reads the totals.
 6. For a tie, empty vote, or manual fallback, choose an outcome.
-7. Press **Reveal result** to update audience phones and the backstage direction display.
-8. Press **Advance to next vote** when the performance is ready to continue.
-9. At the end of a rehearsal or show, use **Archive & reset** to preserve the totals and manual-outcome record.
+7. Press the outcome-specific **Reveal** button to update Stage Direction while each audience phone confirms only its own choice.
+8. Press the poll-specific **Advance** button when the performance is ready to continue.
+9. At story end, confirm Stage Direction changes to a full-screen **Tonight’s Path** showing every selected cast cue, script colour, and page number.
+10. At the end of a rehearsal or show, use **Archive & reset** to preserve the totals and manual-outcome record.
 
-If the network fails, collect the choice in the room, close the vote, use **Choose outcome**, and continue. The visible join URL is the fallback if the external QR image service is unavailable.
+If audience voting fails while the operator remains connected, collect the choice in the room, close the vote, use **Use this outcome**, reveal, and continue. If the operator loses its connection, call the path manually, keep the last Stage Direction visible, and reconnect. The operator’s **Connection problem?** panel keeps these steps on screen. The visible join URL is the fallback if the external QR image service is unavailable.
 
 ## Configure choices
 

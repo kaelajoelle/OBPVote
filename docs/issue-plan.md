@@ -17,14 +17,15 @@ Target: September 21. Exit condition: the Companions complete a timed rehearsal 
    - Done when five unrelated phones can join from the QR code on venue Wi-Fi/cellular.
 4. **Run an end-to-end operator rehearsal**
    - Owner: Kaela facilitates; Tory validates show timing; technical owner supports.
-   - Done when open, vote, close, manual fallback, reveal, backstage direction, advance, archive, and reset are exercised.
+   - Done when open, vote, close, manual fallback, reveal, Stage Direction, advance, archive, and reset are exercised.
 5. **Write and print the fallback runbook**
    - Owner: Kaela facilitates; Tory confirms the in-room cueing.
    - Done when the operator can continue by show of hands/manual override after disconnecting the network.
 
 ### P1 — hardening if time permits
 
-6. Add a connection-health indicator to the operator view.
+6. **Completed: add connection health and Stage Direction heartbeat indicators.**
+   - The operator distinguishes connected, reconnecting, offline, and unknown states while retaining last-known show information.
 7. Add a one-click export of the configured story map for rehearsal review.
 8. Test legibility on the oldest/smallest audience phone available.
 9. Add a deployment smoke test and a short pre-show checklist.

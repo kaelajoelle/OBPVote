@@ -1,5 +1,6 @@
 const card = document.querySelector("#vote-card");
 const storageKey = "obp-audience-id";
+let lastState = null;
 let audienceId = localStorage.getItem(storageKey);
 if (!audienceId) {
   audienceId = crypto.randomUUID();
@@ -10,7 +11,136 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" })[character]);
 }
 
+function wrapCanvasText(context, value, maxWidth) {
+  const words = String(value).split(/\s+/);
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (line && context.measureText(candidate).width > maxWidth) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = candidate;
+    }
+  }
+  if (line) lines.push(line);
+  return lines.length ? lines : [""];
+}
+
+function drawCanvasLines(context, lines, x, y, lineHeight) {
+  lines.forEach((line, index) => context.fillText(line, x, y + (index * lineHeight)));
+  return y + (lines.length * lineHeight);
+}
+
+function loadJourneyLogo() {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = "/obp-logo.png";
+  });
+}
+
+async function downloadJourney(state) {
+  const entries = state?.journeyResults || [];
+  if (!entries.length) throw new Error("There are no completed choices to save yet.");
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("This browser cannot create the journey image.");
+  const width = 1200;
+  const margin = 80;
+  const contentWidth = width - (margin * 2);
+  canvas.width = width;
+
+  const prepared = entries.map((entry) => {
+    context.font = "700 36px Georgia, serif";
+    const promptLines = wrapCanvasText(context, `Poll ${entry.pollNumber} — ${entry.promptLabel}`, contentWidth - 80);
+    context.font = "700 34px Arial, sans-serif";
+    const personalLines = wrapCanvasText(context, entry.yourChoice?.label || "No vote recorded", contentWidth - 80);
+    context.font = "700 30px Arial, sans-serif";
+    const audienceLines = wrapCanvasText(context, `${entry.audienceChoice?.label || "Not recorded"} · ${Number(entry.audiencePercentage || 0)}%`, contentWidth - 80);
+    const height = 210 + (promptLines.length * 44) + (personalLines.length * 42) + (audienceLines.length * 38);
+    return { entry, promptLines, personalLines, audienceLines, height: Math.max(340, height) };
+  });
+
+  const headerHeight = 390;
+  const footerHeight = 150;
+  const gap = 28;
+  canvas.height = headerHeight + footerHeight + prepared.reduce((total, item) => total + item.height + gap, 0);
+
+  const background = context.createLinearGradient(0, 0, width, canvas.height);
+  background.addColorStop(0, "#112f29");
+  background.addColorStop(.55, "#101b35");
+  background.addColorStop(1, "#0e1719");
+  context.fillStyle = background;
+  context.fillRect(0, 0, width, canvas.height);
+  context.strokeStyle = "#d5aa58";
+  context.lineWidth = 10;
+  context.strokeRect(24, 24, width - 48, canvas.height - 48);
+
+  const logo = await loadJourneyLogo();
+  if (logo) context.drawImage(logo, (width - 170) / 2, 58, 170, 170);
+  context.textAlign = "center";
+  context.fillStyle = "#d5aa58";
+  context.font = "800 26px Arial, sans-serif";
+  context.fillText("OFF THE BEATEN PATH", width / 2, 272);
+  context.fillStyle = "#f3ead8";
+  context.font = "700 58px Georgia, serif";
+  context.fillText("Tonight’s Path", width / 2, 340);
+  context.textAlign = "left";
+
+  let y = headerHeight;
+  for (const item of prepared) {
+    context.fillStyle = "rgba(8, 14, 16, .72)";
+    context.fillRect(margin, y, contentWidth, item.height);
+    context.strokeStyle = "rgba(213, 170, 88, .58)";
+    context.lineWidth = 3;
+    context.strokeRect(margin, y, contentWidth, item.height);
+
+    let textY = y + 58;
+    context.fillStyle = "#d5aa58";
+    context.font = "700 36px Georgia, serif";
+    textY = drawCanvasLines(context, item.promptLines, margin + 40, textY, 44) + 24;
+
+    context.fillStyle = "rgba(243, 234, 216, .7)";
+    context.font = "800 20px Arial, sans-serif";
+    context.fillText("YOUR CHOICE", margin + 40, textY);
+    textY += 42;
+    context.fillStyle = "#f3ead8";
+    context.font = "700 34px Arial, sans-serif";
+    textY = drawCanvasLines(context, item.personalLines, margin + 40, textY, 42) + 18;
+
+    context.fillStyle = "rgba(243, 234, 216, .7)";
+    context.font = "800 20px Arial, sans-serif";
+    context.fillText("AUDIENCE PATH", margin + 40, textY);
+    textY += 38;
+    context.fillStyle = "#f2d89f";
+    context.font = "700 30px Arial, sans-serif";
+    drawCanvasLines(context, item.audienceLines, margin + 40, textY, 38);
+    y += item.height + gap;
+  }
+
+  context.textAlign = "center";
+  context.fillStyle = "rgba(243, 234, 216, .72)";
+  context.font = "600 22px Arial, sans-serif";
+  context.fillText("Your choices shaped tonight’s adventure through Arlyrus.", width / 2, canvas.height - 82);
+
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  if (!blob) throw new Error("The journey image could not be created.");
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `off-the-beaten-path-${new Date().toISOString().slice(0, 10)}.png`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function render(state) {
+  lastState = state;
   if (state.status === "revealed") {
     card.innerHTML = state.yourChoice ? `
       <p class="status success">Your choice</p>
@@ -32,7 +162,7 @@ function render(state) {
           <div><dt>Audience choice</dt><dd>${escapeHtml(entry.audienceChoice?.label || "Not recorded")} <strong>${Number(entry.audiencePercentage || 0)}%</strong></dd></div>
         </dl>
       </article>`).join("");
-    card.innerHTML = `<p class="status">The path is chosen.</p><h2>Now watch how your choices unfold, adventurer.</h2>${journey ? `<section class="journey-summary"><div class="breakdown-heading"><span>Tonight’s path</span><span>${state.journeyResults.length} choices</span></div>${journey}</section>` : ""}`;
+    card.innerHTML = `<p class="status">The path is chosen.</p><h2>Now watch how your choices unfold, adventurer.</h2>${journey ? `<section class="journey-summary"><div class="breakdown-heading"><span>Tonight’s path</span><span>${state.journeyResults.length} choices</span></div>${journey}</section><button class="save-journey" type="button" data-save-journey>Save this page</button><p class="save-note">Downloads your Tonight’s Path keepsake as a PNG image.</p>` : ""}`;
     return;
   }
   if (!state.prompt || state.status === "ready") {
@@ -66,6 +196,21 @@ async function refresh() {
 }
 
 card.addEventListener("click", async (event) => {
+  const saveButton = event.target.closest("[data-save-journey]");
+  if (saveButton) {
+    const originalLabel = saveButton.textContent;
+    try {
+      saveButton.disabled = true;
+      saveButton.textContent = "Preparing image…";
+      await downloadJourney(lastState);
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      saveButton.disabled = false;
+      saveButton.textContent = originalLabel;
+    }
+    return;
+  }
   const button = event.target.closest("[data-option-id]");
   if (!button) return;
   card.querySelectorAll("button").forEach((item) => { item.disabled = true; });

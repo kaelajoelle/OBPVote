@@ -23,3 +23,8 @@ export const performanceArchive = sqliteTable("performance_archive", {
   totalVotes: integer("total_votes").notNull(),
   historyJson: text("history_json").notNull()
 });
+
+export const displayHeartbeat = sqliteTable("display_heartbeat", {
+  displayId: text("display_id").primaryKey(),
+  lastSeen: integer("last_seen").notNull()
+});

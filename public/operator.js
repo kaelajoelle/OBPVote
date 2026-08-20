@@ -2,23 +2,94 @@ const login = document.querySelector("#operator-login");
 const panel = document.querySelector("#operator-panel");
 const keyInput = document.querySelector("#operator-key");
 let operatorKey = sessionStorage.getItem("obp-operator-key") || "";
+let showMode = sessionStorage.getItem("obp-show-mode") === "true";
 let lastState = null;
+let lastSyncAt = null;
+let connectionFailureSince = null;
+let refreshInFlight = false;
 keyInput.value = operatorKey;
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" })[character]);
 }
 
+function formatDuration(totalSeconds) {
+  const seconds = Math.max(0, Math.floor(totalSeconds));
+  if (seconds < 60) return `${seconds}s`;
+  return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+}
+
+function markConnected() {
+  lastSyncAt = Date.now();
+  connectionFailureSince = null;
+}
+
+function markDisconnected() {
+  if (!connectionFailureSince) connectionFailureSince = Date.now();
+  updateLiveStatus();
+}
+
 async function api(action = "state", body = null) {
-  const response = await fetch(`/api/operator/${action}`, {
-    method: action === "state" ? "GET" : "POST",
-    headers: { "content-type": "application/json", "x-operator-key": operatorKey },
-    body: body ? JSON.stringify(body) : undefined,
-    cache: "no-store"
-  });
+  let response;
+  try {
+    response = await fetch(`/api/operator/${action}`, {
+      method: action === "state" ? "GET" : "POST",
+      headers: { "content-type": "application/json", "x-operator-key": operatorKey },
+      body: body ? JSON.stringify(body) : undefined,
+      cache: "no-store"
+    });
+  } catch {
+    markDisconnected();
+    throw new Error("Connection lost. The last-known show state is still displayed.");
+  }
+  markConnected();
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || "Request failed.");
   return result;
+}
+
+function updatePill(element, state, text) {
+  if (!element) return;
+  element.classList.remove("connected", "reconnecting", "offline", "unknown");
+  element.classList.add(state);
+  element.querySelector(".connection-label").textContent = text;
+}
+
+function updateLiveStatus() {
+  if (panel.hidden) return;
+  const operatorPill = panel.querySelector("#operator-connectivity");
+  const stagePill = panel.querySelector("#operator-stage-connectivity");
+  const failureAge = connectionFailureSince ? Date.now() - connectionFailureSince : 0;
+  const syncAge = lastSyncAt ? Math.max(0, Math.floor((Date.now() - lastSyncAt) / 1000)) : null;
+
+  if (!connectionFailureSince && lastSyncAt) {
+    updatePill(operatorPill, "connected", syncAge <= 1 ? "Operator connected · just now" : `Operator connected · ${syncAge}s ago`);
+  } else if (failureAge < 5000) {
+    updatePill(operatorPill, "reconnecting", "Operator reconnecting…");
+  } else {
+    updatePill(operatorPill, "offline", syncAge === null ? "Operator offline" : `Operator offline · last update ${formatDuration(syncAge)} ago`);
+  }
+
+  if (connectionFailureSince) {
+    updatePill(stagePill, "unknown", "Stage display status unknown");
+  } else if (!lastState?.stageLastSeen) {
+    updatePill(stagePill, "unknown", "Stage display not detected");
+  } else {
+    const estimatedServerNow = Number(lastState.serverTime || Date.now()) + (lastSyncAt ? Date.now() - lastSyncAt : 0);
+    const stageAge = Math.max(0, Math.floor((estimatedServerNow - Number(lastState.stageLastSeen)) / 1000));
+    if (stageAge < 5) updatePill(stagePill, "connected", "Stage display connected");
+    else if (stageAge < 10) updatePill(stagePill, "reconnecting", `Stage display delayed · ${stageAge}s`);
+    else updatePill(stagePill, "offline", `Stage display offline · ${formatDuration(stageAge)} ago`);
+  }
+
+  const timer = panel.querySelector("#vote-timer");
+  if (timer && lastState?.status === "open") {
+    timer.textContent = `Voting open · ${formatDuration((Date.now() - Number(lastState.statusSince || Date.now())) / 1000)}`;
+  }
+
+  if (connectionFailureSince) {
+    panel.querySelectorAll("[data-action]").forEach((button) => { button.disabled = true; });
+  }
 }
 
 function render(state) {
@@ -27,6 +98,9 @@ function render(state) {
   const maxVotes = Math.max(1, ...Object.values(state.results || {}));
   const canLoadPrompt = ["ready", "complete"].includes(state.status);
   const canSkipPrompt = prompt && ["ready", "open", "closed"].includes(state.status);
+  const selectedOutcome = prompt?.options.find((option) => option.id === state.winnerId) || null;
+  const nextPrompt = state.prompts.find((item) => item.id === selectedOutcome?.nextPromptId) || null;
+  const statusLabels = { ready: "Ready", open: "Voting open", closed: "Voting closed", revealed: "Revealed", complete: "Complete" };
   const promptOptions = state.prompts.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === prompt?.id ? "selected" : ""}>Poll ${escapeHtml(item.pollNumber)} — ${escapeHtml(item.operatorLabel)}${item.special ? " (conditional)" : ""}</option>`).join("");
   const results = prompt?.options.map((option) => {
     const count = state.results[option.id] || 0;
@@ -35,13 +109,31 @@ function render(state) {
     return `<div class="result-row ${winner ? "selected" : ""}">
       <div><strong>${escapeHtml(option.label)}</strong><span>${count} vote${count === 1 ? "" : "s"}</span></div>
       <div class="bar"><i style="width:${Math.round((count / maxVotes) * 100)}%"></i></div>
-      ${state.status === "closed" ? `<button class="secondary" data-action="override" data-option-id="${escapeHtml(option.id)}">${manual ? "Manual outcome ✓" : "Choose outcome"}</button>` : ""}
+      ${state.status === "closed" ? `<button class="secondary" data-action="override" data-option-id="${escapeHtml(option.id)}">${manual ? "Manual outcome ✓" : "Use this outcome"}</button>` : ""}
     </div>`;
   }).join("") || "";
 
+  let primaryAction = "";
+  if (state.status === "ready") primaryAction = `<button class="primary-cue" data-action="open">Open Poll ${escapeHtml(prompt?.pollNumber || "")}</button>`;
+  if (state.status === "open") primaryAction = `<button class="primary-cue" data-action="close">Close Poll ${escapeHtml(prompt?.pollNumber || "")} — ${state.totalVotes} vote${state.totalVotes === 1 ? "" : "s"}</button>`;
+  if (state.status === "closed") primaryAction = `<button class="primary-cue" data-action="reveal" ${selectedOutcome ? "" : "disabled"}>${selectedOutcome ? `Reveal: ${escapeHtml(selectedOutcome.stageLabel || selectedOutcome.label)}` : "Choose an outcome to reveal"}</button>`;
+  if (state.status === "revealed") primaryAction = `<button class="primary-cue" data-action="advance">${nextPrompt ? `Advance to Poll ${escapeHtml(nextPrompt.pollNumber)}` : "Finish story"}</button>`;
+
+  panel.className = `card operator-panel${showMode ? " show-mode" : ""}`;
   panel.innerHTML = `
-    <div class="operator-topline"><span class="status">${escapeHtml(state.status)}</span><strong>${state.totalVotes} current votes</strong></div>
-    <section class="cue-control">
+    <div class="operator-command-bar">
+      <div>
+        <p class="eyebrow">${prompt ? `Poll ${escapeHtml(prompt.pollNumber)} · ${escapeHtml(prompt.operatorLabel)}` : "Performance"}</p>
+        <div class="operator-state-line"><span class="status">${escapeHtml(statusLabels[state.status] || state.status)}</span><strong>${state.totalVotes} current vote${state.totalVotes === 1 ? "" : "s"}</strong></div>
+      </div>
+      <button class="secondary mode-toggle" data-ui-action="toggle-show-mode">${showMode ? "Exit Show Mode" : "Enter Show Mode"}</button>
+    </div>
+    <div class="connection-row" aria-label="Connection health">
+      <div id="operator-connectivity" class="connection-pill" role="status"><span class="connection-dot" aria-hidden="true"></span><span class="connection-label">Checking operator…</span></div>
+      <div id="operator-stage-connectivity" class="connection-pill" role="status"><span class="connection-dot" aria-hidden="true"></span><span class="connection-label">Checking stage display…</span></div>
+    </div>
+    ${state.status === "open" ? `<p id="vote-timer" class="vote-timer">Voting open · ${formatDuration((Date.now() - Number(state.statusSince || Date.now())) / 1000)}</p>` : ""}
+    <section class="cue-control setup-only">
       <label for="prompt-picker">Vote to load on audience phones</label>
       <div class="inline-control">
         <select id="prompt-picker" ${canLoadPrompt ? "" : "disabled"}>${promptOptions}</select>
@@ -49,27 +141,32 @@ function render(state) {
       </div>
       <p class="fine-print">Loading a vote puts audience phones on standby. Press <strong>Open vote</strong> at the stage cue.</p>
     </section>
-    ${prompt ? `<h2>${escapeHtml(prompt.title)}</h2>${prompt.question ? `<p>${escapeHtml(prompt.question)}</p>` : ""}` : `<h2>Story complete</h2>`}
+    ${prompt ? `<h2>${escapeHtml(prompt.title)}</h2>${prompt.question ? `<p>${escapeHtml(prompt.question)}</p>` : ""}` : `<h2>Story complete</h2><p>Exit Show Mode to archive this performance or prepare another run.</p>`}
     <div class="results">${results}</div>
-    ${state.status === "revealed" && state.winnerId ? `<p class="reveal-note">The result is now visible on audience phones and the backstage display.</p>` : ""}
+    ${state.status === "revealed" ? `<p class="reveal-note">Stage Direction has updated. Audience phones are showing only each person’s own choice.</p>` : ""}
     <div class="operator-actions">
-      ${state.status === "ready" ? `<button data-action="open">Open vote</button>` : ""}
-      ${state.status === "open" ? `<button data-action="close">Close vote</button>` : ""}
-      ${state.status === "closed" ? `<button data-action="reveal" ${state.winnerId ? "" : "disabled"}>Reveal result</button>` : ""}
-      ${state.status === "revealed" ? `<button data-action="advance">Advance to next vote</button>` : ""}
-      ${canSkipPrompt ? `<button class="secondary" data-action="skip">Skip this poll</button>` : ""}
-      <button class="secondary" data-action="reset">${state.history.length ? "Archive & reset" : "Reset story"}</button>
+      ${primaryAction}
+      ${canSkipPrompt ? `<button class="secondary" data-action="skip">Skip Poll ${escapeHtml(prompt.pollNumber)}</button>` : ""}
+      <button class="secondary setup-only" data-action="reset">${state.history.length ? "Archive & reset" : "Reset story"}</button>
     </div>
-    <nav class="quick-links" aria-label="Show pages">
-      <a href="${escapeHtml(state.joinUrl)}" target="_blank" rel="noreferrer"><span>Audience page</span><small>Voting and result reveal</small></a>
-      <a href="${escapeHtml(state.stageUrl)}" target="_blank" rel="noreferrer"><span>Backstage display</span><small>Cast and stage-manager direction</small></a>
+    <details class="recovery-panel">
+      <summary>Connection problem?</summary>
+      <div class="recovery-content">
+        <p><strong>Audience issue while the operator is connected:</strong> collect a show of hands, close the vote, use the chosen outcome, reveal, and continue.</p>
+        <p><strong>Operator offline:</strong> call the path manually, keep the last Stage Direction visible, and reconnect. Exit Show Mode to jump to the correct poll when service returns.</p>
+      </div>
+    </details>
+    <nav class="quick-links setup-only" aria-label="Show pages">
+      <a href="${escapeHtml(state.joinUrl)}" target="_blank" rel="noreferrer"><span>Audience page</span><small>Voting and personal choice confirmation</small></a>
+      <a href="${escapeHtml(state.stageUrl)}" target="_blank" rel="noreferrer"><span>Stage Direction</span><small>Cast and stage-manager direction</small></a>
       <a href="${escapeHtml(state.resultsUrl)}" target="_blank" rel="noreferrer"><span>Results history</span><small>Current and archived run totals</small></a>
     </nav>
-    <aside class="join-panel">
+    <aside class="join-panel setup-only">
       <div><span class="eyebrow">Audience join link</span><a href="${escapeHtml(state.joinUrl)}">${escapeHtml(state.joinUrl)}</a></div>
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(state.joinUrl)}" alt="QR code for the audience join link" />
       <p class="fine-print">If the QR service is unavailable, display or announce the join link.</p>
     </aside>`;
+  updateLiveStatus();
 }
 
 async function connect() {
@@ -89,11 +186,19 @@ async function connect() {
 document.querySelector("#connect").addEventListener("click", connect);
 keyInput.addEventListener("input", () => keyInput.setCustomValidity(""));
 panel.addEventListener("click", async (event) => {
+  const uiButton = event.target.closest("[data-ui-action]");
+  if (uiButton?.dataset.uiAction === "toggle-show-mode") {
+    showMode = !showMode;
+    sessionStorage.setItem("obp-show-mode", String(showMode));
+    if (lastState) render(lastState);
+    return;
+  }
+
   const button = event.target.closest("[data-action]");
   if (!button || button.disabled) return;
-  if (button.dataset.action === "reset" && lastState?.history.length) {
-    const confirmed = confirm("Archive this run’s completed results and reset to Poll 1?");
-    if (!confirmed) return;
+  if (button.dataset.action === "reset") {
+    const message = lastState?.history.length ? "Archive this run’s completed results and reset to Poll 1?" : "Reset the story to Poll 1?";
+    if (!confirm(message)) return;
   }
   if (button.dataset.action === "skip") {
     const confirmed = confirm(`Skip Poll ${lastState?.prompt?.pollNumber || ""} without recording a result?`);
@@ -111,9 +216,24 @@ panel.addEventListener("click", async (event) => {
   }
 });
 
-if (operatorKey) connect();
-setInterval(async () => {
-  if (!panel.hidden && document.activeElement?.id !== "prompt-picker") {
-    try { render(await api()); } catch { /* keep last-known state visible */ }
+async function refreshState() {
+  if (panel.hidden || refreshInFlight) return;
+  refreshInFlight = true;
+  try {
+    const state = await api();
+    if (document.activeElement?.id === "prompt-picker") {
+      lastState = state;
+      updateLiveStatus();
+    } else {
+      render(state);
+    }
+  } catch {
+    markDisconnected();
+  } finally {
+    refreshInFlight = false;
   }
-}, 1000);
+}
+
+if (operatorKey) connect();
+setInterval(refreshState, 1000);
+setInterval(updateLiveStatus, 1000);

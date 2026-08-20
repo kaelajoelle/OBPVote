@@ -15,6 +15,13 @@
       "when": 1787248868006,
       "tag": "0001_salty_johnny_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787259902491,
+      "tag": "0002_long_war_machine",
+      "breakpoints": true
     }
   ]
 }

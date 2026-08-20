@@ -31,6 +31,10 @@ interface ArchiveRow {
   history_json: string;
 }
 
+interface DisplayHeartbeatRow {
+  last_seen: number;
+}
+
 const sessionSchema = `CREATE TABLE IF NOT EXISTS performance_session (
   id INTEGER PRIMARY KEY,
   current_prompt_id TEXT,
@@ -52,6 +56,11 @@ const archiveSchema = `CREATE TABLE IF NOT EXISTS performance_archive (
   ended_at INTEGER NOT NULL,
   total_votes INTEGER NOT NULL,
   history_json TEXT NOT NULL
+)`;
+
+const displayHeartbeatSchema = `CREATE TABLE IF NOT EXISTS display_heartbeat (
+  display_id TEXT PRIMARY KEY,
+  last_seen INTEGER NOT NULL
 )`;
 
 function json(body: unknown, status = 200) {
@@ -120,6 +129,7 @@ async function ensureDatabase(env: Env) {
     env.DB.prepare(sessionSchema),
     env.DB.prepare(voteSchema),
     env.DB.prepare(archiveSchema),
+    env.DB.prepare(displayHeartbeatSchema),
     env.DB.prepare(`INSERT OR IGNORE INTO performance_session
       (id, current_prompt_id, status, manual_outcome_id, history_json, updated_at)
       VALUES (1, ?, 'ready', NULL, '[]', ?)`).bind(story.startPromptId, Date.now())
@@ -221,10 +231,18 @@ async function publicState(env: Env, audienceId: string | null) {
 }
 
 async function stageState(env: Env) {
+  await env.DB.prepare(`INSERT INTO display_heartbeat (display_id, last_seen) VALUES ('stage', ?)
+    ON CONFLICT(display_id) DO UPDATE SET last_seen = excluded.last_seen`)
+    .bind(Date.now()).run();
   const session = await getSession(env);
   const prompt = promptById(session.current_prompt_id);
   const history = parseHistory(session.history_json);
   let direction = null;
+  const journey = session.status === "complete"
+    ? history
+      .map((entry) => outcomeDetails(entry.promptId, entry.winnerId))
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    : null;
 
   if (session.status === "revealed" && prompt) {
     const results = await getResults(env, prompt.id);
@@ -238,6 +256,7 @@ async function stageState(env: Env) {
   return {
     status: session.status,
     direction,
+    journey,
     currentPoll: prompt ? {
       id: prompt.id,
       pollNumber: prompt.pollNumber,
@@ -251,6 +270,9 @@ async function operatorState(env: Env, origin: string) {
   const prompt = promptById(session.current_prompt_id);
   const results = await getResults(env, session.current_prompt_id);
   const history = parseHistory(session.history_json);
+  const stageHeartbeat = await env.DB.prepare(
+    "SELECT last_seen FROM display_heartbeat WHERE display_id = 'stage'"
+  ).first<DisplayHeartbeatRow>();
   return {
     status: session.status,
     prompt,
@@ -259,6 +281,9 @@ async function operatorState(env: Env, origin: string) {
     totalVotes: Object.values(results).reduce((total, count) => total + count, 0),
     winnerId: winnerId(results, session.manual_outcome_id),
     manualOutcomeId: session.manual_outcome_id,
+    statusSince: session.updated_at,
+    serverTime: Date.now(),
+    stageLastSeen: stageHeartbeat?.last_seen ?? null,
     joinUrl: origin,
     stageUrl: `${origin}/stage.html`,
     resultsUrl: `${origin}/results.html`,

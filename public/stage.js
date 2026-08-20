@@ -2,7 +2,10 @@ const login = document.querySelector("#stage-login");
 const display = document.querySelector("#stage-display");
 const keyInput = document.querySelector("#stage-key");
 const stageBrand = document.querySelector(".stage-brand");
+const connectivity = document.querySelector("#stage-connectivity");
 let showKey = sessionStorage.getItem("obp-stage-key") || "";
+let lastConnectedAt = null;
+let connectionFailureSince = null;
 keyInput.value = showKey;
 
 function escapeHtml(value) {
@@ -19,7 +22,57 @@ async function getState() {
   return result;
 }
 
+function connectionAge() {
+  return lastConnectedAt ? Math.max(0, Math.floor((Date.now() - lastConnectedAt) / 1000)) : null;
+}
+
+function updateConnectivity() {
+  const label = connectivity.querySelector(".connection-label");
+  const failureAge = connectionFailureSince ? Date.now() - connectionFailureSince : 0;
+  connectivity.classList.remove("connected", "reconnecting", "offline");
+  if (!connectionFailureSince && lastConnectedAt) {
+    connectivity.classList.add("connected");
+    label.textContent = "Connected";
+  } else if (failureAge < 5000) {
+    connectivity.classList.add("reconnecting");
+    label.textContent = "Reconnecting…";
+  } else {
+    connectivity.classList.add("offline");
+    const age = connectionAge();
+    label.textContent = age === null ? "Offline" : `Offline · last update ${age}s ago`;
+  }
+}
+
+function markConnected() {
+  lastConnectedAt = Date.now();
+  connectionFailureSince = null;
+  updateConnectivity();
+}
+
+function markDisconnected() {
+  if (!connectionFailureSince) connectionFailureSince = Date.now();
+  updateConnectivity();
+}
+
 function render(state) {
+  if (state.status === "complete" && state.journey?.length) {
+    display.innerHTML = `
+      <section class="stage-direction stage-summary">
+        <p class="stage-screen-header">Stage Direction</p>
+        <h2 class="stage-summary-title">Tonight’s Path</h2>
+        <div class="stage-summary-grid">
+          ${state.journey.map((direction) => `
+            <article class="stage-summary-item" style="--stage-accent:${escapeHtml(direction.stageColor)}">
+              <span class="stage-summary-poll">Poll ${escapeHtml(direction.pollNumber)}</span>
+              <h3>${escapeHtml(direction.stageLabel)}</h3>
+              ${direction.scriptColor ? `<p class="stage-summary-colour">${escapeHtml(direction.scriptColor)}</p>` : ""}
+              <p class="stage-summary-page">Page ${escapeHtml(direction.pageNumber)}</p>
+            </article>`).join("")}
+        </div>
+      </section>`;
+    return;
+  }
+
   const direction = state.direction;
   display.innerHTML = direction ? `
     <section class="stage-direction" style="--stage-accent:${escapeHtml(direction.stageColor)}">
@@ -43,7 +96,9 @@ async function connect() {
     login.hidden = true;
     stageBrand.hidden = true;
     display.hidden = false;
+    connectivity.hidden = false;
     render(state);
+    markConnected();
   } catch (error) {
     keyInput.setCustomValidity(error.message);
     keyInput.reportValidity();
@@ -55,6 +110,12 @@ keyInput.addEventListener("input", () => keyInput.setCustomValidity(""));
 if (showKey) connect();
 setInterval(async () => {
   if (!display.hidden) {
-    try { render(await getState()); } catch { /* keep last-known direction visible */ }
+    try {
+      render(await getState());
+      markConnected();
+    } catch {
+      markDisconnected();
+    }
   }
 }, 1000);
+setInterval(updateConnectivity, 1000);

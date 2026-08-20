@@ -14,14 +14,21 @@
 - Open the vote and confirm the correct wording and choices appear.
 - Submit one choice per phone and confirm totals increase for the operator.
 - Close the vote and confirm phones do not reveal the result early.
-- Reveal the result and confirm audience and backstage screens update together.
+- Confirm the non-automatic timer increases while voting remains open.
+- Reveal the result and confirm each phone shows only its own choice while Stage Direction updates.
 - Advance and confirm the next vote is ready while backstage retains the latest direction.
+- Complete the story and confirm Stage Direction replaces the last cue with a full-screen Tonight’s Path containing every selected cue, script colour, and page number.
+- Complete the story, press **Save this page** on an iPhone and Android phone, and confirm the downloaded PNG contains the full Tonight’s Path summary.
 
 ## Recovery and edge cases
 
 - Close a vote with no responses and choose a manual outcome.
 - Create a tie, resolve it manually, reveal it, and advance.
 - Disconnect and reconnect the operator page without changing the active state.
+- Disconnect the operator network and confirm the indicator changes from reconnecting to offline, controls stop accepting actions, and the last-known state remains visible.
+- Open Stage Direction and confirm the operator reports it connected; close that page and confirm the operator reports it delayed and then offline.
+- Disconnect Stage Direction and confirm its own indicator changes while the last direction remains visible.
+- Enter Show Mode and confirm cue selection, QR, links, and reset tools are hidden while the primary cue action, timer, totals, skip, and recovery panel remain available.
 - Load a later poll from standby to simulate jumping ahead in rehearsal.
 - Skip a ready poll and an open poll; confirm no result is recorded and the next poll is ready.
 - Confirm the backstage screen never displays whether an outcome was manual.
@@ -32,3 +39,4 @@
 - One vote is enforced per browser, not per person. Private browsing, another browser, or cleared storage can create another vote.
 - The backstage colour labels and page numbers should be checked against Tory’s approved performance script before use.
 - The external QR image has a visible join-link fallback if that service is unavailable.
+- Connection health confirms the operator/service and Stage Direction heartbeat only; it does not prove that every audience phone is online.

@@ -14,9 +14,9 @@ This is intentionally a prototype architecture for the September 21 readthrough.
 
 ## Views
 
-- `/`: audience view. Shows the current open choice, accepts one vote per browser per round, and displays the chosen result after the operator reveals it.
-- `/operator.html`: operator view. Opens, closes, or skips voting, sees live totals, chooses a manual outcome when needed, reveals the result, advances the branch, and reviews current and archived runs.
-- `/stage.html`: read-only backstage view. Fills the display with the latest concise branch label, script colour, and page number inside a matching outline, without exposing manual-override information.
+- `/`: audience view. Shows the current open choice, accepts one vote per browser per round, confirms only that browser’s own choice after reveal, and shows the larger Tonight’s Path summary when the story completes. The final summary can be rendered locally into a downloadable PNG keepsake without uploading new personal data.
+- `/operator.html`: operator view. Setup Mode exposes cue selection, links, QR, and reset tools. Show Mode keeps the current state, totals, timer, connection health, explicit next action, skip, manual outcome, and recovery guidance prominent.
+- `/stage.html`: read-only Stage Direction view. Fills the display with the latest concise branch label, script colour, and page number inside a matching outline, without exposing manual-override information. When the story completes, it switches to a full-screen Tonight’s Path grid containing every selected cast cue, colour, and page number. A corner indicator reports its connection to the service.
 - `/results.html`: protected results view. Loads current and archived totals on demand so archive accordions are not disrupted by live polling.
 
 ## Data and state
@@ -33,7 +33,9 @@ This is intentionally a prototype architecture for the September 21 readthrough.
 - The join URL is always visible beside the QR code.
 - If voting, Wi-Fi, or the QR service fails, the operator can close the vote, gather a show-of-hands result, select the manual outcome, and continue.
 - Ties and empty votes cannot be revealed until the operator explicitly selects an outcome.
-- Audience and backstage screens change direction only when the operator deliberately presses **Reveal result**.
+- Audience phones confirm their own choices and Stage Direction changes only when the operator deliberately presses the outcome-specific **Reveal** button.
+- The operator reports its own service connection separately from the Stage Direction heartbeat; it does not claim that every audience phone is online.
+- On connection loss, the operator and Stage Direction pages retain their last-known state instead of clearing the show information.
 - Skipping a poll discards that poll’s unrecorded votes and moves to the next scripted poll without adding a result to show history.
 
 ## Deployment shape
