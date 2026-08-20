@@ -23,11 +23,12 @@
 - Create a tie, resolve it manually, reveal it, and advance.
 - Disconnect and reconnect the operator page without changing the active state.
 - Load a later poll from standby to simulate jumping ahead in rehearsal.
+- Skip a ready poll and an open poll; confirm no result is recorded and the next poll is ready.
 - Confirm the backstage screen never displays whether an outcome was manual.
 - Archive and reset, then confirm Poll 1 is ready and the completed run appears under Results history.
 
 ## MVP limitations to remember
 
 - One vote is enforced per browser, not per person. Private browsing, another browser, or cleared storage can create another vote.
-- The backstage colour labels should be checked against Tory’s approved script before performance use.
+- The backstage colour labels and page numbers should be checked against Tory’s approved performance script before use.
 - The external QR image has a visible join-link fallback if that service is unavailable.

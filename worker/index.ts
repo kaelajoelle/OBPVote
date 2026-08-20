@@ -83,6 +83,7 @@ function outcomeDetails(promptId: string, winnerId: string) {
     scriptColor: option.scriptColor,
     stageColor: option.stageColor,
     stageLabel: option.stageLabel,
+    pageNumber: option.pageNumber,
     stageDirection: option.stageDirection
   };
 }
@@ -344,6 +345,19 @@ async function handleApi(request: Request, env: Env) {
     await env.DB.prepare(`UPDATE performance_session
       SET current_prompt_id = ?, status = 'ready', manual_outcome_id = NULL, updated_at = ? WHERE id = 1`)
       .bind(body.promptId, now).run();
+  } else if (action === "skip") {
+    if (!prompt) return json({ error: "There is no current vote to skip." }, 400);
+    if (session.status === "revealed") {
+      return json({ error: "Advance the revealed result instead of skipping it." }, 400);
+    }
+    const promptIndex = story.prompts.findIndex((item) => item.id === prompt.id);
+    const nextPrompt = story.prompts[promptIndex + 1] ?? null;
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM votes WHERE prompt_id = ?").bind(prompt.id),
+      env.DB.prepare(`UPDATE performance_session
+        SET current_prompt_id = ?, status = ?, manual_outcome_id = NULL, updated_at = ? WHERE id = 1`)
+        .bind(nextPrompt?.id ?? null, nextPrompt ? "ready" : "complete", now)
+    ]);
   } else if (action === "reset") {
     const history = parseHistory(session.history_json);
     const statements = [];

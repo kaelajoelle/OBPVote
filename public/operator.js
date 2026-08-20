@@ -26,6 +26,7 @@ function render(state) {
   const prompt = state.prompt;
   const maxVotes = Math.max(1, ...Object.values(state.results || {}));
   const canLoadPrompt = ["ready", "complete"].includes(state.status);
+  const canSkipPrompt = prompt && ["ready", "open", "closed"].includes(state.status);
   const promptOptions = state.prompts.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === prompt?.id ? "selected" : ""}>Poll ${escapeHtml(item.pollNumber)} — ${escapeHtml(item.operatorLabel)}${item.special ? " (conditional)" : ""}</option>`).join("");
   const results = prompt?.options.map((option) => {
     const count = state.results[option.id] || 0;
@@ -48,7 +49,7 @@ function render(state) {
       </div>
       <p class="fine-print">Loading a vote puts audience phones on standby. Press <strong>Open vote</strong> at the stage cue.</p>
     </section>
-    ${prompt ? `<h2>${escapeHtml(prompt.title)}</h2><p>${escapeHtml(prompt.question)}</p>` : `<h2>Story complete</h2>`}
+    ${prompt ? `<h2>${escapeHtml(prompt.title)}</h2>${prompt.question ? `<p>${escapeHtml(prompt.question)}</p>` : ""}` : `<h2>Story complete</h2>`}
     <div class="results">${results}</div>
     ${state.status === "revealed" && state.winnerId ? `<p class="reveal-note">The result is now visible on audience phones and the backstage display.</p>` : ""}
     <div class="operator-actions">
@@ -56,6 +57,7 @@ function render(state) {
       ${state.status === "open" ? `<button data-action="close">Close vote</button>` : ""}
       ${state.status === "closed" ? `<button data-action="reveal" ${state.winnerId ? "" : "disabled"}>Reveal result</button>` : ""}
       ${state.status === "revealed" ? `<button data-action="advance">Advance to next vote</button>` : ""}
+      ${canSkipPrompt ? `<button class="secondary" data-action="skip">Skip this poll</button>` : ""}
       <button class="secondary" data-action="reset">${state.history.length ? "Archive & reset" : "Reset story"}</button>
     </div>
     <nav class="quick-links" aria-label="Show pages">
@@ -91,6 +93,10 @@ panel.addEventListener("click", async (event) => {
   if (!button || button.disabled) return;
   if (button.dataset.action === "reset" && lastState?.history.length) {
     const confirmed = confirm("Archive this run’s completed results and reset to Poll 1?");
+    if (!confirmed) return;
+  }
+  if (button.dataset.action === "skip") {
+    const confirmed = confirm(`Skip Poll ${lastState?.prompt?.pollNumber || ""} without recording a result?`);
     if (!confirmed) return;
   }
   try {

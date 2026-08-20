@@ -22,7 +22,7 @@ function render(state) {
     return;
   }
   if (state.status === "complete") {
-    card.innerHTML = `<p class="status">The path is chosen.</p><h2>Thank you, adventurers.</h2>`;
+    card.innerHTML = `<p class="status">The path is chosen.</p><h2>Now watch how your choices unfold, adventurer.</h2>`;
     return;
   }
   if (!state.prompt || state.status === "ready") {
@@ -30,7 +30,7 @@ function render(state) {
     return;
   }
   if (state.status === "closed") {
-    card.innerHTML = `<p class="status">Voting closed</p><h2>The company’s path is being revealed…</h2>`;
+    card.innerHTML = `<p class="status">Voting closed</p><h2>The Companions’ path is being revealed…</h2>`;
     return;
   }
   if (state.hasVoted) {
@@ -40,7 +40,7 @@ function render(state) {
   card.innerHTML = `
     <p class="status">Voting is open</p>
     <h2>${escapeHtml(state.prompt.title)}</h2>
-    <p>${escapeHtml(state.prompt.question)}</p>
+    ${state.prompt.question ? `<p>${escapeHtml(state.prompt.question)}</p>` : ""}
     <div class="choice-list">
       ${state.prompt.options.map((option) => `<button class="choice" data-option-id="${escapeHtml(option.id)}">${escapeHtml(option.label)}</button>`).join("")}
     </div>`;

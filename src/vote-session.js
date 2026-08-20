@@ -57,6 +57,17 @@ export class VoteSession {
     this.manualOutcomeId = null;
   }
 
+  skip() {
+    if (!this.prompt) throw new Error("There is no current vote to skip.");
+    if (this.status === "revealed") throw new Error("Advance the revealed result instead of skipping it.");
+    const promptIndex = this.story.prompts.findIndex((prompt) => prompt.id === this.currentPromptId);
+    const nextPrompt = this.story.prompts[promptIndex + 1] ?? null;
+    this.currentPromptId = nextPrompt?.id ?? null;
+    this.status = nextPrompt ? "ready" : "complete";
+    this.votes.clear();
+    this.manualOutcomeId = null;
+  }
+
   results() {
     const counts = Object.fromEntries(this.prompt?.options.map((option) => [option.id, 0]) ?? []);
     for (const optionId of this.votes.values()) counts[optionId] += 1;

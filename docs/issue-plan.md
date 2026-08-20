@@ -2,7 +2,7 @@
 
 ## Milestone: Readthrough voting prototype
 
-Target: September 21. Exit condition: the company completes a timed rehearsal using audience phones and the operator fallback without losing the branch state.
+Target: September 21. Exit condition: the Companions complete a timed rehearsal using audience phones and the operator fallback without losing the branch state.
 
 ### P0 — required for the readthrough
 

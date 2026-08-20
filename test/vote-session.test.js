@@ -55,11 +55,12 @@ test("contains the eight numbered script polls plus the conditional 4.5 vote", (
   assert.deepEqual(story.prompts.map((prompt) => prompt.pollNumber), ["1", "2", "3", "4", "4.5", "5", "6", "7", "8"]);
 });
 
-test("every outcome has a concise backstage label and outline colour", () => {
+test("every outcome has a concise backstage label, outline colour, and script page", () => {
   for (const prompt of story.prompts) {
     for (const option of prompt.options) {
       assert.ok(option.stageLabel);
       assert.match(option.stageColor, /^#[0-9a-f]{6}$/i);
+      assert.ok(Number.isInteger(option.pageNumber) && option.pageNumber > 0);
     }
   }
 });
@@ -71,4 +72,23 @@ test("operator can load any scripted vote while voting is not open", () => {
   assert.equal(session.status, "ready");
   session.open();
   assert.throws(() => session.selectPrompt("poll-8-song"), /Finish the current vote/);
+});
+
+test("operator can skip an unused or in-progress poll without recording a result", () => {
+  const session = new VoteSession(story);
+  session.open();
+  session.castVote("browser-a", "enchantress");
+  session.skip();
+  assert.equal(session.currentPromptId, "poll-2-song");
+  assert.equal(session.status, "ready");
+  assert.equal(session.history.length, 0);
+  assert.equal(session.votes.size, 0);
+});
+
+test("skipping the final poll completes the story", () => {
+  const session = new VoteSession(story);
+  session.selectPrompt("poll-8-song");
+  session.skip();
+  assert.equal(session.currentPromptId, null);
+  assert.equal(session.status, "complete");
 });

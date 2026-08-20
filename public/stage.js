@@ -23,9 +23,9 @@ function render(state) {
   const direction = state.direction;
   display.innerHTML = direction ? `
     <section class="stage-direction" style="--stage-accent:${escapeHtml(direction.stageColor)}">
-      <p class="status">Current direction</p>
       <h2 class="stage-choice">${escapeHtml(direction.stageLabel)}</h2>
       ${direction.scriptColor ? `<p class="script-colour">${escapeHtml(direction.scriptColor)}</p>` : ""}
+      <p class="script-page">Page ${escapeHtml(direction.pageNumber)}</p>
     </section>` : `
     <section class="stage-direction waiting">
       <p class="status">Stand by</p>

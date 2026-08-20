@@ -34,8 +34,8 @@ The current scaffold implements these as audience, operator, backstage, and resu
 | Page | Purpose | Access |
 | --- | --- | --- |
 | `/` | Audience voting, vote confirmation, and revealed result | Public / QR |
-| `/operator.html` | Load, open, close, resolve, reveal, advance, and review results | Show key |
-| `/stage.html` | Large auto-updating branch name and script colour with a matching outline | Show key |
+| `/operator.html` | Load, open, close, skip, resolve, reveal, advance, and review results | Show key |
+| `/stage.html` | Full-screen branch name, script colour, page number, and matching outline | Show key |
 | `/results.html` | Current and archived run totals that refresh only on request | Show key |
 
 The operator page links to **Results history** in a new tab. Its archived-run accordions stay open because the results page refreshes only when **Refresh results** is pressed. **Archive & reset** stores the completed run before returning the show to Poll 1.
@@ -64,6 +64,7 @@ If `OPERATOR_KEY` is omitted, local development uses `rehearsal`. The hosted dep
 2. The operator loads the scripted poll needed for the next cue. Audience phones remain on standby.
 3. The operator opens the current vote on the stage cue.
 4. Audience members make one choice each.
+   - If the poll is not needed, the operator can press **Skip this poll** and confirm. No result is recorded.
 5. The operator closes voting and reads the totals.
 6. For a tie, empty vote, or manual fallback, choose an outcome.
 7. Press **Reveal result** to update audience phones and the backstage direction display.
@@ -78,7 +79,7 @@ The app now contains Polls 1–8 from the September 21 script plus the script’
 
 The audience-facing wording is a concise adaptation of the supplied script. Tory supplies and approves final artistic/performance requirements and exact choice wording; Kaela facilitates and product-manages the prototype and readiness process. Technical ownership remains unassigned until explicitly decided.
 
-The backstage page intentionally does not identify whether an outcome was manually selected. It shows only a concise branch label and, where the script specifies one, the script colour in a matching outline. That operational detail is recorded only on the protected results page. The audience page uses the gold, burgundy, teal, green, purple, blue, and steel palette drawn from the OBP shield.
+The backstage page intentionally does not identify whether an outcome was manually selected. It shows only a concise branch label, the matching script colour where specified, and the current script page. That operational detail is recorded only on the protected results page. The audience page retains the original restrained gold-and-parchment treatment.
 
 To make an approved wording or routing change, edit `src/story.js`. Each prompt needs a stable `id`, audience-facing copy, and options. Each option’s `nextPromptId` points to another prompt or is `null` when that path ends.
 

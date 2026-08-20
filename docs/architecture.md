@@ -15,8 +15,8 @@ This is intentionally a prototype architecture for the September 21 readthrough.
 ## Views
 
 - `/`: audience view. Shows the current open choice, accepts one vote per browser per round, and displays the chosen result after the operator reveals it.
-- `/operator.html`: operator view. Opens and closes voting, sees live totals, chooses a manual outcome when needed, reveals the result, advances the branch, and reviews current and archived runs.
-- `/stage.html`: read-only backstage view. Keeps only the latest concise branch label and script colour visible inside a matching outline, without exposing manual-override information.
+- `/operator.html`: operator view. Opens, closes, or skips voting, sees live totals, chooses a manual outcome when needed, reveals the result, advances the branch, and reviews current and archived runs.
+- `/stage.html`: read-only backstage view. Fills the display with the latest concise branch label, script colour, and page number inside a matching outline, without exposing manual-override information.
 - `/results.html`: protected results view. Loads current and archived totals on demand so archive accordions are not disrupted by live polling.
 
 ## Data and state
@@ -34,6 +34,7 @@ This is intentionally a prototype architecture for the September 21 readthrough.
 - If voting, Wi-Fi, or the QR service fails, the operator can close the vote, gather a show-of-hands result, select the manual outcome, and continue.
 - Ties and empty votes cannot be revealed until the operator explicitly selects an outcome.
 - Audience and backstage screens change direction only when the operator deliberately presses **Reveal result**.
+- Skipping a poll discards that poll’s unrecorded votes and moves to the next scripted poll without adding a result to show history.
 
 ## Deployment shape
 
