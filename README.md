@@ -14,7 +14,7 @@ Included:
 - operator selection of any scripted poll for rehearsal recovery or cueing;
 - a deliberate personal-choice confirmation on audience phones after reveal;
 - a downloadable PNG keepsake of the completed Tonight’s Path summary;
-- a read-only, auto-updating Stage Direction display with connection health and a final full-show path;
+- a read-only, auto-updating Stage Direction display with connection health and a final recap of the four main story decisions;
 - an operator Show Mode with connection health, a vote timer, explicit cue actions, and fallback guidance;
 - archived vote totals and manual-outcome tracking after each run;
 - reset and manual fallback.
@@ -37,7 +37,7 @@ The current scaffold implements these as audience, operator, Stage Direction, an
 | --- | --- | --- |
 | `/` | Audience voting, personal-choice confirmation, final Tonight’s Path summary, and PNG keepsake download | Public / QR |
 | `/operator.html` | Setup and simplified Show Mode for loading, opening, closing, resolving, revealing, advancing, and recovery | Show key |
-| `/stage.html` | Full-screen Stage Direction, script colour, page number, matching outline, connection health, and final Tonight’s Path | Show key |
+| `/stage.html` | Full-screen Stage Direction, script colour, page number, matching outline, connection health, and a final recap of Polls 3–6 | Show key |
 | `/results.html` | Current and archived run totals that refresh only on request | Show key |
 
 The operator page links to **Results history** in a new tab. Its archived-run accordions stay open because the results page refreshes only when **Refresh results** is pressed. **Archive & reset** stores the completed run before returning the show to Poll 1.
@@ -71,7 +71,7 @@ If `OPERATOR_KEY` is omitted, local development uses `rehearsal`. The hosted dep
 6. For a tie, empty vote, or manual fallback, choose an outcome.
 7. Press the outcome-specific **Reveal** button to update Stage Direction while each audience phone confirms only its own choice.
 8. Press the poll-specific **Advance** button when the performance is ready to continue.
-9. At story end, confirm Stage Direction changes to a full-screen **Tonight’s Path** showing every selected cast cue, script colour, and page number.
+9. At story end, confirm Stage Direction changes to a full-screen **Tonight’s Path** showing the selected cast cues, script colours, and page numbers for Polls 3, 4, 5, and 6.
 10. At the end of a rehearsal or show, use **Archive & reset** to preserve the totals and manual-outcome record.
 
 If audience voting fails while the operator remains connected, collect the choice in the room, close the vote, use **Use this outcome**, reveal, and continue. If the operator loses its connection, call the path manually, keep the last Stage Direction visible, and reconnect. The operator’s **Connection problem?** panel keeps these steps on screen. The visible join URL is the fallback if the external QR image service is unavailable.

@@ -63,6 +63,8 @@ const displayHeartbeatSchema = `CREATE TABLE IF NOT EXISTS display_heartbeat (
   last_seen INTEGER NOT NULL
 )`;
 
+const stageRecapPollNumbers = new Set(["3", "4", "5", "6"]);
+
 function json(body: unknown, status = 200) {
   return Response.json(body, { status, headers: { "cache-control": "no-store" } });
 }
@@ -242,6 +244,7 @@ async function stageState(env: Env) {
     ? history
       .map((entry) => outcomeDetails(entry.promptId, entry.winnerId))
       .filter((item): item is NonNullable<typeof item> => Boolean(item))
+      .filter((item) => stageRecapPollNumbers.has(String(item.pollNumber)))
     : null;
 
   if (session.status === "revealed" && prompt) {

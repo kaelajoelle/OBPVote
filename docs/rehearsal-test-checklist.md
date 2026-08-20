@@ -17,7 +17,7 @@
 - Confirm the non-automatic timer increases while voting remains open.
 - Reveal the result and confirm each phone shows only its own choice while Stage Direction updates.
 - Advance and confirm the next vote is ready while backstage retains the latest direction.
-- Complete the story and confirm Stage Direction replaces the last cue with a full-screen Tonight’s Path containing every selected cue, script colour, and page number.
+- Complete the story and confirm Stage Direction replaces the last cue with a full-screen Tonight’s Path containing only the selected cues, script colours, and page numbers for Polls 3, 4, 5, and 6.
 - Complete the story, press **Save this page** on an iPhone and Android phone, and confirm the downloaded PNG contains the full Tonight’s Path summary.
 
 ## Recovery and edge cases

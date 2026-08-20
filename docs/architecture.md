@@ -16,7 +16,7 @@ This is intentionally a prototype architecture for the September 21 readthrough.
 
 - `/`: audience view. Shows the current open choice, accepts one vote per browser per round, confirms only that browser’s own choice after reveal, and shows the larger Tonight’s Path summary when the story completes. The final summary can be rendered locally into a downloadable PNG keepsake without uploading new personal data.
 - `/operator.html`: operator view. Setup Mode exposes cue selection, links, QR, and reset tools. Show Mode keeps the current state, totals, timer, connection health, explicit next action, skip, manual outcome, and recovery guidance prominent.
-- `/stage.html`: read-only Stage Direction view. Fills the display with the latest concise branch label, script colour, and page number inside a matching outline, without exposing manual-override information. When the story completes, it switches to a full-screen Tonight’s Path grid containing every selected cast cue, colour, and page number. A corner indicator reports its connection to the service.
+- `/stage.html`: read-only Stage Direction view. Fills the display with the latest concise branch label, script colour, and page number inside a matching outline, without exposing manual-override information. When the story completes, it switches to a full-screen Tonight’s Path grid containing the selected cast cues, colours, and page numbers for the four main story decisions: Polls 3, 4, 5, and 6. A corner indicator reports its connection to the service.
 - `/results.html`: protected results view. Loads current and archived totals on demand so archive accordions are not disrupted by live polling.
 
 ## Data and state
