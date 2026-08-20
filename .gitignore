@@ -1,0 +1,12 @@
+node_modules/
+.env
+.DS_Store
+Thumbs.db
+coverage/
+*.log
+
+# ChatGPT project mirror material; never publish with the app.
+sources/
+AGENTS.md
+.agents/
+.codex/

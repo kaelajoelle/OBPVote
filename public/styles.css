@@ -1,0 +1,69 @@
+:root {
+  color-scheme: dark;
+  --forest: #112f29;
+  --midnight: #101b35;
+  --burgundy: #532534;
+  --gold: #d5aa58;
+  --parchment: #f3ead8;
+  --ink: #191713;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--parchment);
+  font-family: Georgia, "Times New Roman", serif;
+  background:
+    linear-gradient(135deg, rgba(12, 28, 25, .92), rgba(16, 27, 53, .88)),
+    url("https://obpmusical.com/wp-content/uploads/2025/03/Website-Banner.png") center / cover fixed;
+}
+button, input { font: inherit; }
+button {
+  border: 1px solid #e7ca89;
+  border-radius: .5rem;
+  padding: .9rem 1.1rem;
+  color: #191713;
+  background: linear-gradient(#e8ca86, var(--gold));
+  font-weight: 700;
+  cursor: pointer;
+}
+button:disabled { cursor: not-allowed; opacity: .5; }
+button.secondary { color: var(--parchment); background: transparent; border-color: rgba(243, 234, 216, .35); }
+input { width: 100%; padding: .85rem; border: 1px solid rgba(243,234,216,.4); border-radius: .4rem; color: white; background: rgba(0,0,0,.25); }
+a { color: #f2d89f; }
+
+.shell { width: min(44rem, calc(100% - 2rem)); margin: 0 auto; padding: clamp(2rem, 8vw, 6rem) 0; }
+.operator-shell { width: min(62rem, calc(100% - 2rem)); padding-top: 2rem; }
+.brand { margin-bottom: 2rem; text-align: center; text-shadow: 0 2px 12px #000; }
+.brand.compact { text-align: left; margin-bottom: 1rem; }
+.brand h1 { margin: .3rem 0; font-size: clamp(2.2rem, 8vw, 4.5rem); line-height: 1; }
+.brand.compact h1 { font-size: clamp(2rem, 5vw, 3rem); }
+.eyebrow, .status { margin: 0; color: var(--gold); font-family: system-ui, sans-serif; font-size: .78rem; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+.status.success { color: #a8dfb8; }
+.status.warning { color: #ffc39c; }
+.card { padding: clamp(1.25rem, 5vw, 2.5rem); border: 1px solid rgba(213,170,88,.55); border-radius: .8rem; background: rgba(14, 23, 25, .93); box-shadow: 0 1.5rem 5rem rgba(0,0,0,.35); }
+.card h2 { margin: .65rem 0; font-size: clamp(1.7rem, 6vw, 2.6rem); }
+.choice-list { display: grid; gap: .8rem; margin-top: 1.5rem; }
+.choice { min-height: 4rem; font-size: 1.1rem; }
+.fine-print { font: .82rem/1.45 system-ui, sans-serif; opacity: .72; text-align: center; }
+.inline-control { display: flex; gap: .75rem; margin-top: .5rem; }
+.operator-topline { display: flex; justify-content: space-between; gap: 1rem; font-family: system-ui, sans-serif; }
+.results { display: grid; gap: 1rem; margin: 1.5rem 0; }
+.result-row { padding: 1rem; border: 1px solid rgba(243,234,216,.2); border-radius: .5rem; }
+.result-row.selected { border-color: var(--gold); }
+.result-row > div:first-child { display: flex; justify-content: space-between; gap: 1rem; }
+.result-row span { font-family: system-ui, sans-serif; opacity: .75; }
+.bar { height: .55rem; margin: .7rem 0; overflow: hidden; border-radius: 1rem; background: rgba(255,255,255,.1); }
+.bar i { display: block; height: 100%; border-radius: inherit; background: var(--gold); transition: width .25s; }
+.operator-actions { display: flex; flex-wrap: wrap; gap: .75rem; padding-top: 1rem; border-top: 1px solid rgba(243,234,216,.15); }
+.join-panel { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; margin-top: 2rem; padding: 1rem; border-radius: .5rem; background: rgba(0,0,0,.2); }
+.join-panel a { display: block; margin-top: .4rem; overflow-wrap: anywhere; }
+.join-panel img { grid-row: span 2; width: 9rem; padding: .4rem; background: white; }
+.join-panel .fine-print { margin: 0; text-align: left; }
+
+@media (max-width: 34rem) {
+  .inline-control { flex-direction: column; }
+  .join-panel { grid-template-columns: 1fr; }
+  .join-panel img { grid-row: auto; width: 8rem; }
+}
