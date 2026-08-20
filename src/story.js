@@ -41,8 +41,8 @@ export const story = {
       title: "An orc reaches for a battle horn.",
       question: "What should Khulgar do?",
       options: [
-        { id: "coin-purse", label: "Pick up the coin purse", nextPromptId: "poll-4-5-vial", scriptColor: Black, stageColor: "#000000", stageLabel: "RING", pageNumber: 55, stageDirection: "Khulgar has the ring" },
-        { id: "run-to-camp", label: "Don’t chance it", nextPromptId: "poll-4-5-vial", scriptColor: black, stageColor: "#000000", stageLabel: "NO RING", pageNumber: 55, stageDirection: "Khulgar does not have the ring" }
+        { id: "coin-purse", label: "Pick up the coin purse", nextPromptId: "poll-4-5-vial", scriptColor: "BLACK", stageColor: "#000000", stageLabel: "RING", pageNumber: 55, stageDirection: "Khulgar has the ring" },
+        { id: "run-to-camp", label: "Don’t chance it", nextPromptId: "poll-4-5-vial", scriptColor: "BLACK", stageColor: "#000000", stageLabel: "NO RING", pageNumber: 55, stageDirection: "Khulgar does not have the ring" }
       ]
     },
     {
