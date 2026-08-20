@@ -51,7 +51,8 @@ async function ensureDatabase(env: Env) {
 async function getSession(env: Env) {
   const row = await env.DB.prepare("SELECT * FROM performance_session WHERE id = 1").first<SessionRow>();
   if (!row) throw new Error("The performance session is unavailable.");
-  if (row.current_prompt_id && !promptById(row.current_prompt_id)) {
+  const needsPromptRepair = row.status !== "complete" && (!row.current_prompt_id || !promptById(row.current_prompt_id));
+  if (needsPromptRepair) {
     await env.DB.prepare(`UPDATE performance_session
       SET current_prompt_id = ?, status = 'ready', manual_outcome_id = NULL, updated_at = ? WHERE id = 1`)
       .bind(story.startPromptId, Date.now()).run();
