@@ -175,22 +175,36 @@ async function getArchives(env: Env) {
 async function publicState(env: Env, audienceId: string | null) {
   const session = await getSession(env);
   const prompt = promptById(session.current_prompt_id);
-  let hasVoted = false;
+  let yourChoice = null;
   if (audienceId && session.current_prompt_id) {
-    hasVoted = Boolean(await env.DB.prepare(
-      "SELECT 1 AS voted FROM votes WHERE prompt_id = ? AND audience_id = ?"
-    ).bind(session.current_prompt_id, audienceId).first());
+    const vote = await env.DB.prepare(
+      "SELECT option_id FROM votes WHERE prompt_id = ? AND audience_id = ?"
+    ).bind(session.current_prompt_id, audienceId).first<{ option_id: string }>();
+    const selected = prompt?.options.find((option) => option.id === vote?.option_id);
+    if (selected) yourChoice = { id: selected.id, label: selected.label };
   }
 
   let revealedOutcome = null;
+  let revealedResults = null;
+  let totalVotes = null;
   if (session.status === "revealed" && prompt) {
     const results = await getResults(env, prompt.id);
     const selectedId = winnerId(results, session.manual_outcome_id);
     const selected = prompt.options.find((option) => option.id === selectedId);
     if (selected) revealedOutcome = { id: selected.id, label: selected.label };
+    revealedResults = results;
+    totalVotes = Object.values(results).reduce((total, count) => total + count, 0);
   }
 
-  return { status: session.status, prompt, hasVoted, revealedOutcome };
+  return {
+    status: session.status,
+    prompt,
+    hasVoted: Boolean(yourChoice),
+    yourChoice,
+    revealedOutcome,
+    revealedResults,
+    totalVotes
+  };
 }
 
 async function stageState(env: Env) {

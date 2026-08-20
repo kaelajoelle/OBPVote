@@ -43,12 +43,22 @@ test("audience sees the chosen result only after the operator reveals it", () =>
   session.open();
   session.castVote("a", "hag");
   session.close();
+  assert.deepEqual(session.publicState("a").yourChoice, {
+    id: "hag",
+    label: "Flamespun Ruins — the Hag"
+  });
   assert.equal(session.publicState("a").revealedOutcome, null);
+  assert.equal(session.publicState("a").revealedResults, null);
   session.reveal();
   assert.deepEqual(session.publicState("a").revealedOutcome, {
     id: "hag",
     label: "Flamespun Ruins — the Hag"
   });
+  assert.deepEqual(session.publicState("a").revealedResults, {
+    enchantress: 0,
+    hag: 1
+  });
+  assert.equal(session.publicState("a").totalVotes, 1);
 });
 
 test("contains the eight numbered script polls plus the conditional 4.5 vote", () => {

@@ -98,11 +98,17 @@ export class VoteSession {
   publicState(audienceId = null) {
     const winnerId = this.status === "revealed" ? this.winnerId() : null;
     const revealedOutcome = winnerId ? this.prompt.options.find((option) => option.id === winnerId) : null;
+    const yourChoiceId = audienceId ? this.votes.get(audienceId) : null;
+    const yourChoice = yourChoiceId ? this.prompt?.options.find((option) => option.id === yourChoiceId) : null;
+    const revealedResults = this.status === "revealed" ? this.results() : null;
     return {
       status: this.status,
       prompt: this.prompt,
-      hasVoted: audienceId ? this.votes.has(audienceId) : false,
-      revealedOutcome: revealedOutcome ? { id: revealedOutcome.id, label: revealedOutcome.label } : null
+      hasVoted: Boolean(yourChoice),
+      yourChoice: yourChoice ? { id: yourChoice.id, label: yourChoice.label } : null,
+      revealedOutcome: revealedOutcome ? { id: revealedOutcome.id, label: revealedOutcome.label } : null,
+      revealedResults,
+      totalVotes: revealedResults ? this.votes.size : null
     };
   }
 

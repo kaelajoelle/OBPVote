@@ -10,13 +10,41 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" })[character]);
 }
 
+function percentage(count, total) {
+  return total > 0 ? Math.round((count / total) * 100) : 0;
+}
+
 function render(state) {
   if (state.status === "revealed" && state.revealedOutcome) {
+    const totalVotes = Number(state.totalVotes || 0);
+    const winnerCount = Number(state.revealedResults?.[state.revealedOutcome.id] || 0);
+    const matched = state.yourChoice?.id === state.revealedOutcome.id;
+    const breakdown = state.prompt.options.map((option) => {
+      const count = Number(state.revealedResults?.[option.id] || 0);
+      const percent = percentage(count, totalVotes);
+      return `<div class="audience-result-row ${option.id === state.revealedOutcome.id ? "selected" : ""}">
+        <div><span>${escapeHtml(option.label)}</span><strong>${percent}%</strong></div>
+        <div class="bar" aria-hidden="true"><i style="width: ${percent}%"></i></div>
+        <small>${count} vote${count === 1 ? "" : "s"}</small>
+      </div>`;
+    }).join("");
     card.innerHTML = `
       <p class="status success">The audience has chosen</p>
-      <div class="result-reveal">
-        <span>The path continues with</span>
-        <h2>${escapeHtml(state.revealedOutcome.label)}</h2>
+      <div class="choice-comparison">
+        <div class="comparison-card">
+          <span>Your choice</span>
+          <h2>${escapeHtml(state.yourChoice?.label || "No vote recorded")}</h2>
+        </div>
+        <div class="comparison-card audience-winner">
+          <span>Audience choice</span>
+          <h2>${escapeHtml(state.revealedOutcome.label)}</h2>
+          <strong>${percentage(winnerCount, totalVotes)}%</strong>
+        </div>
+      </div>
+      ${state.yourChoice ? `<p class="match-note">${matched ? "Your choice matched the audience." : "The adventure follows the audience’s choice."}</p>` : ""}
+      <div class="audience-breakdown">
+        <div class="breakdown-heading"><span>Final result</span><span>${totalVotes} total vote${totalVotes === 1 ? "" : "s"}</span></div>
+        ${breakdown}
       </div>
       <p>Watch the stage as your choice becomes part of the story.</p>`;
     return;
@@ -34,7 +62,7 @@ function render(state) {
     return;
   }
   if (state.hasVoted) {
-    card.innerHTML = `<p class="status success">Choice received</p><h2>Your voice is part of the story.</h2><p>Watch the stage for what happens next.</p>`;
+    card.innerHTML = `<p class="status success">Choice received</p><h2>Your voice is part of the story.</h2>${state.yourChoice ? `<div class="your-choice"><span>Your choice</span><strong>${escapeHtml(state.yourChoice.label)}</strong></div>` : ""}<p>Watch the stage for what happens next.</p>`;
     return;
   }
   card.innerHTML = `

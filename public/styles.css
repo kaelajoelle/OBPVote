@@ -54,6 +54,22 @@ a { color: #f2d89f; }
 .result-reveal { margin: 1.25rem 0; padding: 1.25rem; border: 1px solid var(--gold); border-radius: .65rem; text-align: center; background: rgba(213,170,88,.09); }
 .result-reveal span { font: 700 .85rem/1.4 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; opacity: .78; }
 .result-reveal h2 { color: #f2d89f; }
+.your-choice { display: grid; gap: .35rem; margin: 1.25rem 0; padding: 1rem; border-left: .25rem solid var(--gold); background: rgba(213,170,88,.09); }
+.your-choice span, .comparison-card > span, .breakdown-heading { font: 800 .72rem/1.4 system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+.your-choice strong { font-size: 1.15rem; }
+.choice-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; margin: 1.25rem 0 .8rem; }
+.comparison-card { display: flex; flex-direction: column; justify-content: center; min-height: 10rem; padding: 1rem; border: 1px solid rgba(243,234,216,.25); border-radius: .65rem; text-align: center; background: rgba(255,255,255,.035); }
+.comparison-card h2 { margin: .6rem 0; font-size: clamp(1.25rem, 5vw, 1.8rem); }
+.comparison-card.audience-winner { border-color: var(--gold); background: rgba(213,170,88,.09); }
+.comparison-card.audience-winner h2 { color: #f2d89f; }
+.comparison-card.audience-winner > strong { color: var(--gold); font: 900 1.7rem/1 system-ui, sans-serif; }
+.match-note { margin: .8rem 0 1.4rem; color: #c9f0d4; text-align: center; font: 700 .9rem/1.45 system-ui, sans-serif; }
+.audience-breakdown { display: grid; gap: .7rem; margin: 1.4rem 0; padding-top: 1.2rem; border-top: 1px solid rgba(243,234,216,.15); }
+.breakdown-heading { display: flex; justify-content: space-between; gap: 1rem; color: var(--gold); }
+.audience-result-row { padding: .8rem; border: 1px solid rgba(243,234,216,.15); border-radius: .5rem; background: rgba(0,0,0,.12); }
+.audience-result-row.selected { border-color: rgba(213,170,88,.65); }
+.audience-result-row > div:first-child { display: flex; justify-content: space-between; gap: 1rem; font-family: system-ui, sans-serif; }
+.audience-result-row small { font: .75rem/1.4 system-ui, sans-serif; opacity: .65; }
 .fine-print { font: .82rem/1.45 system-ui, sans-serif; opacity: .72; text-align: center; }
 .inline-control { display: flex; gap: .75rem; margin-top: .5rem; }
 .operator-topline { display: flex; justify-content: space-between; gap: 1rem; font-family: system-ui, sans-serif; }
@@ -110,6 +126,7 @@ a { color: #f2d89f; }
 .script-page { margin: 1rem 0 0; color: var(--parchment); font: 800 clamp(.9rem, min(2vw, 3vh), 1.5rem)/1.2 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; opacity: .82; }
 
 @media (max-width: 34rem) {
+  .choice-comparison { grid-template-columns: 1fr; }
   .inline-control { flex-direction: column; }
   .operator-brand, .stage-brand { align-items: flex-start; }
   .compact-logo { width: 5rem; }
