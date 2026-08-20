@@ -14,15 +14,15 @@ This is intentionally a prototype architecture for the September 21 readthrough.
 
 ## Views
 
-- `/`: audience view. Requires the active performance code, then shows the current open choice, accepts one vote per browser per round, confirms only that browser’s own choice after reveal, and shows the larger Tonight’s Path summary when the story completes. The show QR carries the code automatically. The final summary can be rendered locally into a downloadable PNG keepsake without uploading new personal data.
-- `/operator.html`: operator view. The operator starts a performance by entering the Stage Manager’s show-report reference; the service creates a short audience code and matching QR. Setup Mode exposes cue selection, links, QR, and end/archive tools. Show Mode keeps the current state, audience code, joined-device count, totals, timer, connection health, explicit next action, skip, manual outcome, and recovery guidance prominent.
+- `/`: audience view. Requires the active performance code, welcomes the Adventurer before the first cue, lets one path be selected and changed before explicit confirmation, and then shows only that browser’s choice. Completing the final poll leaves phones on a final-bows screen. After the operator’s release cue, the view reveals the complete personal journey with audience percentages and comparison bars. It renders a 1080 × 1920 Story PNG locally, including performance provenance and a deterministic quote, without uploading new personal data.
+- `/operator.html`: operator view. The operator starts a performance by entering the Stage Manager’s show-report reference; the service creates a short audience code and matching QR. Setup Mode exposes cue selection, links, QR, and end/archive tools. Show Mode keeps the current state, audience code, joined-device count, totals, timer, connection health, explicit next action, skip, manual outcome, recovery guidance, and the deliberate post-bows journey-release cue prominent.
 - `/stage.html`: read-only Stage Direction view. Fills the display with the latest concise branch label, script colour, and page number inside a matching outline, without exposing manual-override information. When the story completes, it switches to a full-screen Tonight’s Path grid containing the selected cast cues, colours, and page numbers for the four main story decisions: Polls 3, 4, 5, and 6. A corner indicator reports its connection to the service.
 - `/results.html`: protected results view. Loads current and archived totals on demand so archive accordions are not disrupted by live polling. Each labelled performance provides a copy-ready show-report summary and detailed CSV export.
 
 ## Data and state
 
 - Scripted prompts and branch links live in `src/story.js`.
-- D1 holds one active performance session, its show-report reference, generated audience code, votes, completed-round history, and archived run summaries.
+- D1 holds one active performance session, its show-report reference, generated audience code, post-bows release state, votes, completed-round history, and archived run summaries.
 - Each audience browser creates a random local ID and retains the last accepted performance code locally. The server accepts one vote from that ID in each round only when the active performance code matches.
 - Refreshing a browser preserves its vote; clearing browser storage creates a new ID. This is sufficient for a supervised readthrough, not a fraud-resistant election.
 - Publishing or restarting the hosted worker does not discard the current session. **Archive & end performance** preserves completed-round totals, the report reference, audience code, participating-device count, and manual outcomes before expiring that audience code.
@@ -35,6 +35,7 @@ This is intentionally a prototype architecture for the September 21 readthrough.
 - If voting, Wi-Fi, or the QR service fails, the operator can close the vote, gather a show-of-hands result, select the manual outcome, and continue.
 - Ties and empty votes cannot be revealed until the operator explicitly selects an outcome.
 - Audience phones confirm their own choices and Stage Direction changes only when the operator deliberately presses the outcome-specific **Reveal** button.
+- The complete journey, audience percentages, and keepsake remain unavailable until the story is complete and the operator deliberately presses **Release post-show journey** after the bows.
 - The operator reports its own service connection separately from the Stage Direction heartbeat; it does not claim that every audience phone is online.
 - On connection loss, the operator and Stage Direction pages retain their last-known state instead of clearing the show information.
 - Skipping a poll discards that poll’s unrecorded votes and moves to the next scripted poll without adding a result to show history.

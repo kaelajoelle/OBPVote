@@ -1,7 +1,27 @@
 const card = document.querySelector("#vote-card");
+const pageHeading = document.querySelector(".audience-shell .brand h1");
 const storageKey = "obp-audience-id";
 const performanceCodeStorageKey = "obp-performance-code";
+const approvedQuotes = [
+  { text: "Magic isn’t to be feared. It’s to be marvelled at.", speaker: "Anaax" },
+  { text: "My friend, I love how you look at the world.", speaker: "Anaax" },
+  { text: "I hope somewhere where the path is bright.", speaker: "Anaax" },
+  { text: "We take the road less travelled. We go off the beaten path.", speaker: "Kytius" },
+  { text: "Seeing the Seer gave him hope. So… that gave me hope.", speaker: "Khulgar" },
+  { text: "Always lead with love.", speaker: "Khulgar" },
+  { text: "I see what kind of audience we have this night… not that I’m judging you… much.", speaker: "The Bard’s College" }
+];
+const welcomeLore = [
+  "No two performances of Off the Beaten Path follow exactly the same path.",
+  "Tonight’s adventure will be shaped by the choices made in this room.",
+  "The greatest adventures often begin with a single choice."
+];
 let lastState = null;
+let pendingOptionId = null;
+let pendingPromptId = null;
+let voteSubmitting = false;
+let lastRenderSignature = "";
+let lastLoreTick = -1;
 const codeFromLink = new URLSearchParams(location.search).get("code");
 let performanceCode = codeFromLink || localStorage.getItem(performanceCodeStorageKey) || "";
 let audienceId = localStorage.getItem(storageKey);
@@ -12,6 +32,33 @@ if (!audienceId) {
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" })[character]);
+}
+
+function setExperience(stateName, heading, content) {
+  document.body.dataset.audienceState = stateName;
+  card.dataset.state = stateName;
+  pageHeading.textContent = heading;
+  card.innerHTML = `<span class="compass-ornament" aria-hidden="true"></span><span class="corner-flourish" aria-hidden="true"></span>${content}`;
+}
+
+function formatPerformanceDate(timestamp) {
+  if (!timestamp) return "Tonight’s performance";
+  return new Intl.DateTimeFormat(undefined, { year: "numeric", month: "long", day: "numeric" }).format(new Date(timestamp));
+}
+
+function hashText(value) {
+  let hash = 2166136261;
+  for (const character of String(value)) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function quoteForJourney(state) {
+  const path = (state?.journeyResults || []).map((entry) => entry.yourChoice?.id || "none").join("|");
+  const seed = `${state?.performance?.audienceCode || performanceCode}|${audienceId}|${path}`;
+  return approvedQuotes[hashText(seed) % approvedQuotes.length];
 }
 
 function wrapCanvasText(context, value, maxWidth) {
@@ -45,165 +92,278 @@ function loadJourneyLogo() {
   });
 }
 
+function drawCompass(context, x, y, radius) {
+  context.save();
+  context.translate(x, y);
+  context.strokeStyle = "rgba(218, 176, 93, .62)";
+  context.lineWidth = 3;
+  context.beginPath();
+  context.arc(0, 0, radius, 0, Math.PI * 2);
+  context.arc(0, 0, radius * .72, 0, Math.PI * 2);
+  context.stroke();
+  for (let index = 0; index < 16; index += 1) {
+    const angle = (Math.PI * 2 * index) / 16;
+    const inner = index % 4 === 0 ? radius * .56 : radius * .76;
+    context.beginPath();
+    context.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
+    context.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+    context.stroke();
+  }
+  context.fillStyle = "rgba(218, 176, 93, .82)";
+  context.beginPath();
+  context.moveTo(0, -radius * .68);
+  context.lineTo(radius * .13, radius * .18);
+  context.lineTo(0, radius * .08);
+  context.lineTo(-radius * .13, radius * .18);
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
+function drawFiligreeCorner(context, x, y, size, flip = 1) {
+  context.save();
+  context.translate(x, y);
+  context.scale(flip, 1);
+  context.strokeStyle = "rgba(218, 176, 93, .48)";
+  context.lineWidth = 3;
+  for (let offset = 0; offset < 3; offset += 1) {
+    context.beginPath();
+    context.moveTo(0, offset * 18);
+    context.bezierCurveTo(size * .36, offset * 18, size * .16, size * .42, size * .62, size * .5);
+    context.bezierCurveTo(size * .82, size * .54, size * .76, size * .82, size, size);
+    context.stroke();
+  }
+  context.restore();
+}
+
 async function downloadJourney(state) {
   const entries = state?.journeyResults || [];
-  if (!entries.length) throw new Error("There are no completed choices to save yet.");
+  if (!state?.recapReleased || !entries.length) throw new Error("Tonight’s path has not been released yet.");
 
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   if (!context) throw new Error("This browser cannot create the journey image.");
-  const width = 1200;
-  const margin = 80;
-  const contentWidth = width - (margin * 2);
-  canvas.width = width;
+  canvas.width = 1080;
+  canvas.height = 1920;
 
-  const prepared = entries.map((entry) => {
-    context.font = "700 36px Georgia, serif";
-    const promptLines = wrapCanvasText(context, `Poll ${entry.pollNumber} — ${entry.promptLabel}`, contentWidth - 80);
-    context.font = "700 34px Arial, sans-serif";
-    const personalLines = wrapCanvasText(context, entry.yourChoice?.label || "No vote recorded", contentWidth - 80);
-    context.font = "700 30px Arial, sans-serif";
-    const audienceLines = wrapCanvasText(context, `${entry.audienceChoice?.label || "Not recorded"} · ${Number(entry.audiencePercentage || 0)}%`, contentWidth - 80);
-    const height = 210 + (promptLines.length * 44) + (personalLines.length * 42) + (audienceLines.length * 38);
-    return { entry, promptLines, personalLines, audienceLines, height: Math.max(340, height) };
-  });
-
-  const headerHeight = 390;
-  const footerHeight = 150;
-  const gap = 28;
-  canvas.height = headerHeight + footerHeight + prepared.reduce((total, item) => total + item.height + gap, 0);
-
-  const background = context.createLinearGradient(0, 0, width, canvas.height);
-  background.addColorStop(0, "#112f29");
-  background.addColorStop(.55, "#101b35");
-  background.addColorStop(1, "#0e1719");
+  const background = context.createLinearGradient(0, 0, 1080, 1920);
+  background.addColorStop(0, "#2b2118");
+  background.addColorStop(.38, "#151711");
+  background.addColorStop(1, "#080d0d");
   context.fillStyle = background;
-  context.fillRect(0, 0, width, canvas.height);
-  context.strokeStyle = "#d5aa58";
-  context.lineWidth = 10;
-  context.strokeRect(24, 24, width - 48, canvas.height - 48);
+  context.fillRect(0, 0, 1080, 1920);
+  const glow = context.createRadialGradient(230, 170, 0, 230, 170, 650);
+  glow.addColorStop(0, "rgba(188, 104, 35, .26)");
+  glow.addColorStop(1, "rgba(188, 104, 35, 0)");
+  context.fillStyle = glow;
+  context.fillRect(0, 0, 1080, 900);
+
+  context.strokeStyle = "rgba(218, 176, 93, .72)";
+  context.lineWidth = 5;
+  context.strokeRect(36, 36, 1008, 1848);
+  context.strokeStyle = "rgba(218, 176, 93, .18)";
+  context.lineWidth = 2;
+  context.strokeRect(54, 54, 972, 1812);
+  drawFiligreeCorner(context, 54, 54, 190, 1);
+  drawFiligreeCorner(context, 1026, 1660, 190, -1);
+  drawCompass(context, 900, 190, 92);
 
   const logo = await loadJourneyLogo();
-  if (logo) context.drawImage(logo, (width - 170) / 2, 58, 170, 170);
-  context.textAlign = "center";
-  context.fillStyle = "#d5aa58";
-  context.font = "800 26px Arial, sans-serif";
-  context.fillText("OFF THE BEATEN PATH", width / 2, 272);
-  context.fillStyle = "#f3ead8";
-  context.font = "700 58px Georgia, serif";
-  context.fillText("Tonight’s Path", width / 2, 340);
+  if (logo) context.drawImage(logo, 74, 78, 180, 180);
   context.textAlign = "left";
+  context.fillStyle = "#d9b56d";
+  context.font = "800 28px Arial, sans-serif";
+  context.fillText("OFF THE BEATEN PATH", 292, 118);
+  context.fillStyle = "#f2e5cb";
+  context.font = "700 66px Georgia, serif";
+  context.fillText("The Path I Forged", 292, 190);
+  context.fillStyle = "rgba(242, 229, 203, .74)";
+  context.font = "600 25px Arial, sans-serif";
+  const performanceDate = formatPerformanceDate(state.performance?.startedAt);
+  const audienceCode = state.performance?.audienceCode || performanceCode;
+  context.fillText(`${performanceDate}  ·  ${audienceCode}`, 292, 238);
 
-  let y = headerHeight;
-  for (const item of prepared) {
-    context.fillStyle = "rgba(8, 14, 16, .72)";
-    context.fillRect(margin, y, contentWidth, item.height);
-    context.strokeStyle = "rgba(213, 170, 88, .58)";
-    context.lineWidth = 3;
-    context.strokeRect(margin, y, contentWidth, item.height);
+  const quote = quoteForJourney(state);
+  context.fillStyle = "rgba(7, 10, 9, .62)";
+  context.fillRect(76, 304, 928, 236);
+  context.strokeStyle = "rgba(218, 176, 93, .34)";
+  context.strokeRect(76, 304, 928, 236);
+  context.fillStyle = "#f2e5cb";
+  context.font = "italic 37px Georgia, serif";
+  const quoteLines = wrapCanvasText(context, `“${quote.text}”`, 820).slice(0, 3);
+  drawCanvasLines(context, quoteLines, 122, 370, 50);
+  context.fillStyle = "#d9b56d";
+  context.font = "800 22px Arial, sans-serif";
+  context.fillText(`— ${quote.speaker.toUpperCase()}`, 122, 500);
 
-    let textY = y + 58;
-    context.fillStyle = "#d5aa58";
-    context.font = "700 36px Georgia, serif";
-    textY = drawCanvasLines(context, item.promptLines, margin + 40, textY, 44) + 24;
-
-    context.fillStyle = "rgba(243, 234, 216, .7)";
+  const definingPolls = new Set(["3", "4", "5", "6"]);
+  let featured = entries.filter((entry) => definingPolls.has(String(entry.pollNumber)));
+  if (featured.length < 4) featured = entries.filter((entry) => entry.yourChoice).slice(0, 4);
+  featured = featured.slice(0, 4);
+  let y = 586;
+  for (const entry of featured) {
+    const cardHeight = 252;
+    context.fillStyle = "rgba(8, 12, 11, .7)";
+    context.fillRect(76, y, 928, cardHeight);
+    context.strokeStyle = "rgba(218, 176, 93, .26)";
+    context.strokeRect(76, y, 928, cardHeight);
+    context.fillStyle = "#d9b56d";
     context.font = "800 20px Arial, sans-serif";
-    context.fillText("YOUR CHOICE", margin + 40, textY);
-    textY += 42;
-    context.fillStyle = "#f3ead8";
-    context.font = "700 34px Arial, sans-serif";
-    textY = drawCanvasLines(context, item.personalLines, margin + 40, textY, 42) + 18;
-
-    context.fillStyle = "rgba(243, 234, 216, .7)";
-    context.font = "800 20px Arial, sans-serif";
-    context.fillText("AUDIENCE PATH", margin + 40, textY);
-    textY += 38;
-    context.fillStyle = "#f2d89f";
-    context.font = "700 30px Arial, sans-serif";
-    drawCanvasLines(context, item.audienceLines, margin + 40, textY, 38);
-    y += item.height + gap;
+    context.fillText(`PATH ${entry.pollNumber}`, 108, y + 38);
+    context.fillStyle = "#f2e5cb";
+    context.font = "700 29px Georgia, serif";
+    const choiceLines = wrapCanvasText(context, entry.yourChoice?.label || "No choice recorded", 710).slice(0, 2);
+    drawCanvasLines(context, choiceLines, 108, y + 78, 35);
+    const percentage = Number(entry.yourPercentage || 0);
+    context.textAlign = "right";
+    context.fillStyle = "#f2d28a";
+    context.font = "800 34px Arial, sans-serif";
+    context.fillText(`${percentage}%`, 958, y + 91);
+    context.textAlign = "left";
+    context.fillStyle = "rgba(242, 229, 203, .16)";
+    context.fillRect(108, y + 164, 850, 16);
+    context.fillStyle = "#d9b56d";
+    context.fillRect(108, y + 164, 850 * Math.max(0, Math.min(100, percentage)) / 100, 16);
+    context.fillStyle = "rgba(242, 229, 203, .68)";
+    context.font = "600 21px Arial, sans-serif";
+    context.fillText(`${percentage}% of tonight’s Adventurers walked this path with you.`, 108, y + 220);
+    y += cardHeight + 22;
   }
 
   context.textAlign = "center";
-  context.fillStyle = "rgba(243, 234, 216, .72)";
-  context.font = "600 22px Arial, sans-serif";
-  context.fillText("Your choices shaped tonight’s adventure through Arlyrus.", width / 2, canvas.height - 82);
+  context.fillStyle = "#f2e5cb";
+  context.font = "700 38px Georgia, serif";
+  context.fillText("What path will you choose?", 540, 1748);
+  context.fillStyle = "#d9b56d";
+  context.font = "800 27px Arial, sans-serif";
+  context.fillText("OBPMUSICAL.COM", 540, 1800);
+  context.fillStyle = "rgba(242, 229, 203, .52)";
+  context.font = "600 18px Arial, sans-serif";
+  context.fillText("A different adventure awaits at every performance.", 540, 1840);
 
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
   if (!blob) throw new Error("The journey image could not be created.");
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `off-the-beaten-path-${new Date().toISOString().slice(0, 10)}.png`;
+  link.download = `obp-path-${audienceCode.toLowerCase()}-${new Date(state.performance?.startedAt || Date.now()).toISOString().slice(0, 10)}.png`;
   document.body.appendChild(link);
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function renderSealedChoice(state, status = "Path confirmed") {
+  setExperience("sealed", "Your choice is sealed.", state.yourChoice ? `
+    <p class="status success">${escapeHtml(status)}</p>
+    <div class="result-reveal path-confirmation"><span>You chose</span><h2>${escapeHtml(state.yourChoice.label)}</h2></div>
+    <p class="return-to-stage">Return your attention to the stage, Adventurer.<br />The path continues there.</p>` : `
+    <p class="status">The path is chosen</p><h2>Return your attention to the stage.</h2>`);
+}
+
+function journeyMarkup(state) {
+  return (state.journeyResults || []).map((entry) => {
+    const options = (entry.options || []).map((option) => {
+      const yourPath = option.id === entry.yourChoice?.id;
+      const audiencePath = option.id === entry.audienceChoice?.id;
+      return `<div class="comparison-row ${yourPath ? "your-path" : ""}">
+        <div class="comparison-label"><span>${escapeHtml(option.label)}</span><strong>${Number(option.percentage || 0)}%</strong></div>
+        <div class="comparison-bar"><i style="width:${Math.max(0, Math.min(100, Number(option.percentage || 0)))}%"></i></div>
+        <div class="comparison-tags">${yourPath ? "<span>Your choice</span>" : ""}${audiencePath ? "<span>Audience path</span>" : ""}</div>
+      </div>`;
+    }).join("");
+    const personalMessage = entry.yourChoice
+      ? `${Number(entry.yourPercentage || 0)}% of tonight’s Adventurers chose this path with you.`
+      : "No choice was recorded from this device.";
+    return `<article class="journey-item telltale-result">
+      <div class="journey-heading"><span>Path ${escapeHtml(entry.pollNumber)}</span><strong>${escapeHtml(entry.promptLabel)}</strong></div>
+      <div class="personal-path"><span>You chose</span><strong>${escapeHtml(entry.yourChoice?.label || "No choice recorded")}</strong></div>
+      <div class="audience-comparison">${options}</div>
+      <p class="journey-insight">${escapeHtml(personalMessage)}</p>
+    </article>`;
+  }).join("");
+}
+
 function render(state) {
   lastState = state;
+  if (pendingPromptId !== state.prompt?.id || state.status !== "open" || state.hasVoted) {
+    pendingOptionId = null;
+    pendingPromptId = null;
+  }
+
   if (state.status === "join") {
     if (state.joinStatus === "waiting") {
-      card.innerHTML = `<p class="status">Stand by</p><h2>Tonight’s adventure hasn’t opened yet.</h2><p>Keep this page open. The performance code will be available from the Stage Manager.</p>`;
+      setExperience("waiting", "Your path awaits.", `<p class="status">The path is quiet</p><h2>Tonight’s adventure has not opened yet.</h2><p>Keep this magical item close. The performance code will be revealed in the theatre.</p>`);
       return;
     }
     const invalid = state.joinStatus === "invalid";
-    card.innerHTML = `
-      <p class="status ${invalid ? "warning" : ""}">${invalid ? "That code didn’t match" : "Join tonight’s performance"}</p>
-      <h2>Enter your adventure code.</h2>
-      <p>You’ll find it on the show QR or hear it announced in the theatre.</p>
+    setExperience("join", "Enter the path.", `
+      <p class="status ${invalid ? "warning" : ""}">${invalid ? "That code didn’t match" : "Tonight’s adventure"}</p>
+      <h2>Enter your performance code.</h2><p>The code binds this device to the path unfolding in the theatre.</p>
       <form class="join-code-form" data-join-form>
         <label for="performance-code">Performance code</label>
         <input id="performance-code" name="performance-code" type="text" maxlength="20" autocomplete="one-time-code" autocapitalize="characters" placeholder="Example: RUNE-A3F7" value="${escapeHtml(invalid ? "" : performanceCode)}" required />
-        <button type="submit">Join the adventure</button>
-      </form>`;
+        <button type="submit">Begin the adventure</button>
+      </form>`);
     return;
   }
-  if (state.status === "revealed") {
-    card.innerHTML = state.yourChoice ? `
-      <p class="status success">Your choice</p>
-      <div class="result-reveal">
-        <span>You chose</span>
-        <h2>${escapeHtml(state.yourChoice.label)}</h2>
-      </div>
-      <p>Eyes back to the stage—the path continues now.</p>` : `
-      <p class="status">The path is chosen</p>
-      <h2>Eyes back to the stage.</h2>`;
-    return;
-  }
+
   if (state.status === "complete") {
-    const journey = (state.journeyResults || []).map((entry) => `
-      <article class="journey-item">
-        <div class="journey-heading"><span>Poll ${escapeHtml(entry.pollNumber)}</span><strong>${escapeHtml(entry.promptLabel)}</strong></div>
-        <dl>
-          <div><dt>Your choice</dt><dd>${escapeHtml(entry.yourChoice?.label || "No vote recorded")}</dd></div>
-          <div><dt>Audience choice</dt><dd>${escapeHtml(entry.audienceChoice?.label || "Not recorded")} <strong>${Number(entry.audiencePercentage || 0)}%</strong></dd></div>
-        </dl>
-      </article>`).join("");
-    card.innerHTML = `<p class="status">The path is chosen.</p><h2>Now watch how your choices unfold, adventurer.</h2>${journey ? `<section class="journey-summary"><div class="breakdown-heading"><span>Tonight’s path</span><span>${state.journeyResults.length} choices</span></div>${journey}</section><button class="save-journey" type="button" data-save-journey>Save this page</button><p class="save-note">Downloads your Tonight’s Path keepsake as a PNG image.</p>` : ""}`;
+    if (!state.recapReleased || !state.journeyResults) {
+      setExperience("bows", "The final path awaits.", `
+        <p class="status">The adventure continues onstage</p><h2>Your complete path remains veiled.</h2>
+        <p class="return-to-stage">Set this device aside and enjoy the final moments. Your journey will be revealed after the bows.</p>`);
+      return;
+    }
+    const journey = journeyMarkup(state);
+    const quote = quoteForJourney(state);
+    setExperience("complete", "The path you forged.", `
+      <p class="status">Tonight’s adventure</p><h2>Your choices have left their mark on Arlyrus.</h2>
+      <div class="performance-keepsake-meta"><span>${escapeHtml(formatPerformanceDate(state.performance?.startedAt))}</span><span>${escapeHtml(state.performance?.audienceCode || performanceCode)}</span></div>
+      <blockquote class="journey-quote"><p>“${escapeHtml(quote.text)}”</p><cite>— ${escapeHtml(quote.speaker)}</cite></blockquote>
+      ${journey ? `<section class="journey-summary"><div class="breakdown-heading"><span>Your complete path</span><span>${state.journeyResults.length} choices</span></div>${journey}</section>` : ""}
+      <button class="save-journey" type="button" data-save-journey>Save my path</button>
+      <p class="save-note">Downloads a polished Instagram Story-sized PNG with your defining choices.</p>`);
     return;
   }
-  if (!state.prompt || state.status === "ready") {
-    card.innerHTML = `<p class="status">Stand by</p><h2>The next choice will appear here.</h2>`;
-    return;
-  }
-  if (state.status === "closed") {
-    card.innerHTML = `<p class="status">Voting closed</p><h2>The Companions’ path is being revealed…</h2>`;
+
+  if (state.status === "revealed") {
+    renderSealedChoice(state, "Your choice");
     return;
   }
   if (state.hasVoted) {
-    card.innerHTML = `<p class="status success">Choice received</p><h2>Your voice is part of the story.</h2>${state.yourChoice ? `<div class="your-choice"><span>Your choice</span><strong>${escapeHtml(state.yourChoice.label)}</strong></div>` : ""}<p>Watch the stage for what happens next.</p>`;
+    renderSealedChoice(state);
     return;
   }
-  card.innerHTML = `
-    <p class="status">Voting is open</p>
-    <h2>${escapeHtml(state.prompt.title)}</h2>
+  if (!state.prompt || state.status === "ready") {
+    const isOpening = Number(state.historyCount || 0) === 0 && state.prompt?.pollNumber === "1";
+    if (isOpening) {
+      const lore = welcomeLore[Math.floor(Date.now() / 8000) % welcomeLore.length];
+      setExperience("waiting", "Your path awaits.", `
+        <p class="status">A message from the Bard’s College</p><h2>Good morrow, Adventurer.</h2>
+        <p>Do not be alarmed—this is simply a minor illusion bringing our voice directly to your mind.</p>
+        <p>Keep this magical item close. When The Architect calls upon you, your choice will appear here.</p>
+        <p class="lore-whisper">${escapeHtml(lore)}</p>`);
+    } else {
+      setExperience("waiting", "The path continues.", `<p class="status">Stand by, Adventurer</p><h2>The next choice will appear when the path divides.</h2><p>Until then, return your attention to the stage.</p>`);
+    }
+    return;
+  }
+  if (state.status === "closed") {
+    setExperience("closed", "The path is sealed.", `<p class="status">Voting closed</p><h2>The Companions’ path is being revealed.</h2><p>Return your attention to the stage, Adventurer.</p>`);
+    return;
+  }
+
+  const choices = state.prompt.options.map((option) => {
+    const selected = pendingOptionId === option.id;
+    return `<button class="choice ${selected ? "selected" : ""}" data-option-id="${escapeHtml(option.id)}" aria-pressed="${selected}">${escapeHtml(option.label)}</button>`;
+  }).join("");
+  setExperience("open", "Choose your path.", `
+    <p class="status">The path divides</p><h2>${escapeHtml(state.prompt.title)}</h2>
     ${state.prompt.question ? `<p>${escapeHtml(state.prompt.question)}</p>` : ""}
-    <div class="choice-list">
-      ${state.prompt.options.map((option) => `<button class="choice" data-option-id="${escapeHtml(option.id)}">${escapeHtml(option.label)}</button>`).join("")}
-    </div>`;
+    <div class="choice-list">${choices}</div>
+    <button class="confirm-path" type="button" data-confirm-path ${pendingOptionId && !voteSubmitting ? "" : "disabled"}>${voteSubmitting ? "Sealing your choice…" : "Confirm this path"}</button>
+    <p class="selection-note">You may change your mind until you confirm.</p>`);
 }
 
 async function refresh() {
@@ -214,10 +374,19 @@ async function refresh() {
       localStorage.setItem(performanceCodeStorageKey, performanceCode);
       if (codeFromLink) history.replaceState({}, "", location.pathname);
     }
-    if (document.activeElement?.id === "performance-code") lastState = state;
-    else render(state);
+    const renderSignature = JSON.stringify(state);
+    const loreTick = state.status === "ready" && Number(state.historyCount || 0) === 0 ? Math.floor(Date.now() / 8000) : -1;
+    if (document.activeElement?.id === "performance-code") {
+      lastState = state;
+    } else if (renderSignature !== lastRenderSignature || loreTick !== lastLoreTick) {
+      render(state);
+      lastRenderSignature = renderSignature;
+      lastLoreTick = loreTick;
+    } else {
+      lastState = state;
+    }
   } catch {
-    card.innerHTML = `<p class="status warning">Connection lost</p><h2>Stay on this page.</h2><p>We’ll try again automatically.</p>`;
+    setExperience("offline", "Hold fast, Adventurer.", `<p class="status warning">The connection falters</p><h2>Stay on this page.</h2><p>The path will return as soon as the magic steadies.</p>`);
   }
 }
 
@@ -227,7 +396,7 @@ card.addEventListener("click", async (event) => {
     const originalLabel = saveButton.textContent;
     try {
       saveButton.disabled = true;
-      saveButton.textContent = "Preparing image…";
+      saveButton.textContent = "Illuminating your path…";
       await downloadJourney(lastState);
     } catch (error) {
       alert(error.message);
@@ -237,21 +406,40 @@ card.addEventListener("click", async (event) => {
     }
     return;
   }
-  const button = event.target.closest("[data-option-id]");
-  if (!button) return;
-  card.querySelectorAll("button").forEach((item) => { item.disabled = true; });
-  const response = await fetch("/api/vote", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ audienceId, optionId: button.dataset.optionId, performanceCode })
-  });
-  const body = await response.json();
-  if (response.status === 403) {
-    performanceCode = "";
-    localStorage.removeItem(performanceCodeStorageKey);
-    render({ status: "join", joinStatus: "invalid", codeAccepted: false });
-  } else if (!response.ok) card.innerHTML = `<p class="status warning">${escapeHtml(body.error)}</p>`;
-  else render(body);
+  const optionButton = event.target.closest("[data-option-id]");
+  if (optionButton) {
+    pendingOptionId = optionButton.dataset.optionId;
+    pendingPromptId = lastState?.prompt?.id || null;
+    render(lastState);
+    return;
+  }
+  const confirmButton = event.target.closest("[data-confirm-path]");
+  if (!confirmButton || !pendingOptionId || voteSubmitting) return;
+  voteSubmitting = true;
+  render(lastState);
+  try {
+    const response = await fetch("/api/vote", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ audienceId, optionId: pendingOptionId, performanceCode })
+    });
+    const body = await response.json();
+    if (response.status === 403) {
+      performanceCode = "";
+      localStorage.removeItem(performanceCodeStorageKey);
+      render({ status: "join", joinStatus: "invalid", codeAccepted: false });
+    } else if (!response.ok) {
+      setExperience("error", "The path faltered.", `<p class="status warning">Choice not received</p><h2>${escapeHtml(body.error)}</h2><p>Wait for the next cue from the stage.</p>`);
+    } else {
+      pendingOptionId = null;
+      pendingPromptId = null;
+      render(body);
+    }
+  } catch {
+    setExperience("offline", "Hold fast, Adventurer.", `<p class="status warning">Choice not received</p><h2>The connection faltered.</h2><p>Stay on this page and follow the stage cue.</p>`);
+  } finally {
+    voteSubmitting = false;
+  }
 });
 
 card.addEventListener("submit", async (event) => {
@@ -271,7 +459,7 @@ card.addEventListener("submit", async (event) => {
     }
     render(state);
   } catch {
-    card.innerHTML = `<p class="status warning">Connection lost</p><h2>Stay on this page.</h2><p>We’ll try again automatically.</p>`;
+    setExperience("offline", "Hold fast, Adventurer.", `<p class="status warning">The connection falters</p><h2>Stay on this page.</h2><p>The path will return as soon as the magic steadies.</p>`);
   }
 });
 

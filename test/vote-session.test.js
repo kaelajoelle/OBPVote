@@ -100,7 +100,7 @@ test("skipping the final poll completes the story", () => {
   assert.equal(session.status, "complete");
 });
 
-test("audience receives a personal journey summary when the story completes", () => {
+test("audience journey stays hidden until the operator releases it after completion", () => {
   const session = new VoteSession(story);
   session.selectPrompt("poll-8-song");
   session.open();
@@ -110,11 +110,24 @@ test("audience receives a personal journey summary when the story completes", ()
   session.close();
   session.reveal();
   session.advance();
-  assert.deepEqual(session.publicState("c").journeyResults, [{
-    pollNumber: "8",
-    promptLabel: "Choose the tale that becomes a song.",
-    yourChoice: { id: "loss-and-love", label: "“Loss and Love”" },
-    audienceChoice: { id: "love-and-loss", label: "“Love and Loss”" },
-    audiencePercentage: 67
-  }]);
+  assert.equal(session.publicState("c").journeyResults, null);
+  assert.equal(session.publicState("c").recapReleased, false);
+
+  session.releaseRecap();
+  const state = session.publicState("c");
+  assert.equal(state.recapReleased, true);
+  assert.equal(state.journeyResults.length, 1);
+  assert.deepEqual(state.journeyResults[0].yourChoice, { id: "loss-and-love", label: "“Loss and Love”" });
+  assert.deepEqual(state.journeyResults[0].audienceChoice, { id: "love-and-loss", label: "“Love and Loss”" });
+  assert.equal(state.journeyResults[0].audiencePercentage, 67);
+  assert.equal(state.journeyResults[0].yourPercentage, 33);
+  assert.deepEqual(state.journeyResults[0].options.map(({ id, count, percentage }) => ({ id, count, percentage })), [
+    { id: "loss-and-love", count: 1, percentage: 33 },
+    { id: "love-and-loss", count: 2, percentage: 67 }
+  ]);
+});
+
+test("operator cannot release the post-show journey before the story is complete", () => {
+  const session = new VoteSession(story);
+  assert.throws(() => session.releaseRecap(), /Finish the story/);
 });

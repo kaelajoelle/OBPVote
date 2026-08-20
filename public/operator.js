@@ -161,6 +161,8 @@ function render(state) {
   if (state.status === "open") primaryAction = `<button class="primary-cue" data-action="close">Close Poll ${escapeHtml(prompt?.pollNumber || "")} — ${state.totalVotes} vote${state.totalVotes === 1 ? "" : "s"}</button>`;
   if (state.status === "closed") primaryAction = `<button class="primary-cue" data-action="reveal" ${selectedOutcome ? "" : "disabled"}>${selectedOutcome ? `Reveal: ${escapeHtml(selectedOutcome.stageLabel || selectedOutcome.label)}` : "Choose an outcome to reveal"}</button>`;
   if (state.status === "revealed") primaryAction = `<button class="primary-cue" data-action="advance">${nextPrompt ? `Advance to Poll ${escapeHtml(nextPrompt.pollNumber)}` : "Finish story"}</button>`;
+  if (state.status === "complete" && !state.performance.recapReleasedAt) primaryAction = `<button class="primary-cue" data-action="release-recap">Release post-show journey</button>`;
+  if (state.status === "complete" && state.performance.recapReleasedAt) primaryAction = `<button class="primary-cue" type="button" disabled>Post-show journey released ✓</button>`;
 
   panel.className = `card operator-panel${showMode ? " show-mode" : ""}`;
   panel.innerHTML = `
@@ -190,7 +192,7 @@ function render(state) {
       </div>
       <p class="fine-print">Loading a vote puts audience phones on standby. Press <strong>Open vote</strong> at the stage cue.</p>
     </section>
-    ${prompt ? `<h2>${escapeHtml(prompt.title)}</h2>${prompt.question ? `<p>${escapeHtml(prompt.question)}</p>` : ""}` : `<h2>Story complete</h2><p>Exit Show Mode to archive this performance or prepare another run.</p>`}
+    ${prompt ? `<h2>${escapeHtml(prompt.title)}</h2>${prompt.question ? `<p>${escapeHtml(prompt.question)}</p>` : `<p></p>`}` : `<h2>Story complete</h2><p>${state.performance.recapReleasedAt ? "The complete audience journey is now visible on their phones." : "Keep audience phones on the final-bows screen, then release the complete journey when the bows are finished."}</p>`}
     <div class="results">${results}</div>
     ${state.status === "revealed" ? `<p class="reveal-note">Stage Direction has updated. Audience phones are showing only each person’s own choice.</p>` : ""}
     <div class="operator-actions">
@@ -260,13 +262,19 @@ panel.addEventListener("click", async (event) => {
   if (!button || button.disabled) return;
   if (button.dataset.action === "reset") {
     const performanceLabel = lastState?.performance?.reportCode || "the previous session";
-    const message = lastState?.history.length
-      ? `Archive ${performanceLabel} and end this performance?`
+    const message = lastState?.performance?.recapReleasedAt
+      ? `Archive ${performanceLabel} and end audience access? Audience phones will no longer be able to view or download their paths.`
+      : lastState?.history.length
+        ? `Archive ${performanceLabel} and end this performance?`
       : `End ${performanceLabel} without saving an empty run?`;
     if (!confirm(message)) return;
   }
   if (button.dataset.action === "skip") {
     const confirmed = confirm(`Skip Poll ${lastState?.prompt?.pollNumber || ""} without recording a result?`);
+    if (!confirmed) return;
+  }
+  if (button.dataset.action === "release-recap") {
+    const confirmed = confirm("Release the complete journey, percentages, and download to audience phones now? Do this after the final bows.");
     if (!confirmed) return;
   }
   try {

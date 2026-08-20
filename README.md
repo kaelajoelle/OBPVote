@@ -7,13 +7,14 @@ A lean web-based audience voting prototype for the **September 21 readthrough** 
 Included:
 
 - show-specific browser/QR audience join using a short performance code;
-- current-choice display and one vote per browser per round;
+- current-choice display, changeable selection before confirmation, and one confirmed vote per browser per round;
 - operator controls to open and close voting;
 - live result totals;
 - branch advancement from the winning or manually selected outcome;
 - operator selection of any scripted poll for rehearsal recovery or cueing;
-- a deliberate personal-choice confirmation on audience phones after reveal;
-- a downloadable PNG keepsake of the completed Tonight’s Path summary;
+- a deliberate **Confirm this path** step followed by a quiet personal-choice screen;
+- a Stage Manager-controlled post-bows release of the complete audience journey, percentages, and comparison bars;
+- a downloadable 1080 × 1920 Instagram Story PNG with the performance date, inactive show code, defining choices, audience comparisons, and a stable spoiler-safe quote from the script;
 - a read-only, auto-updating Stage Direction display with connection health and a final recap of the four main story decisions;
 - an operator Show Mode with connection health, a vote timer, explicit cue actions, and fallback guidance;
 - a Stage Manager-entered show-report reference attached to each performance;
@@ -37,7 +38,7 @@ The current scaffold implements these as audience, operator, Stage Direction, an
 
 | Page | Purpose | Access |
 | --- | --- | --- |
-| `/` | Performance-code entry, audience voting, personal-choice confirmation, final Tonight’s Path summary, and PNG keepsake download | Public / show QR |
+| `/` | Candlelit audience welcome, performance-code entry, confirmed voting, post-bows Telltale-style journey comparison, and Instagram Story keepsake | Public / show QR |
 | `/operator.html` | Performance setup plus simplified Show Mode for loading, opening, closing, resolving, revealing, advancing, and recovery | Show key |
 | `/stage.html` | Full-screen Stage Direction, script colour, page number, matching outline, connection health, and a final recap of Polls 3–6 | Show key |
 | `/results.html` | Current and archived totals with copy-ready summaries and CSV exports | Show key |
@@ -69,14 +70,15 @@ If `OPERATOR_KEY` is omitted, local development uses `rehearsal`. The hosted dep
 3. Audience members scan the QR or enter the announced performance code once.
 4. The operator loads the scripted poll needed for the next cue. Audience phones remain on standby.
 5. The operator opens the current vote on the stage cue.
-6. Audience members make one choice each.
+6. Audience members select a path, may change their selection, then press **Confirm this path**. Only the confirmed choice is submitted.
    - If the poll is not needed, the operator can press **Skip this poll** and confirm. No result is recorded.
 7. The operator closes voting and reads the totals.
 8. For a tie, empty vote, or manual fallback, choose an outcome.
 9. Press the outcome-specific **Reveal** button to update Stage Direction while each audience phone confirms only its own choice.
 10. Press the poll-specific **Advance** button when the performance is ready to continue.
-11. At story end, confirm Stage Direction changes to a full-screen **Tonight’s Path** showing the selected cast cues, script colours, and page numbers for Polls 3, 4, 5, and 6.
-12. Use **Archive & end performance**, then copy the show-report summary or download the CSV from Results history.
+11. At story end, confirm Stage Direction changes to a full-screen **Tonight’s Path** showing the selected cast cues, script colours, and page numbers for Polls 3, 4, 5, and 6. Audience phones remain on the final-bows screen.
+12. After the final bows, press **Release post-show journey**. Audience phones then reveal personal-versus-audience percentages, comparison bars, and the Story-sized download.
+13. Leave the performance active briefly so Adventurers can review and save their paths. Then use **Archive & end performance**, which ends audience access, and copy the show-report summary or download the CSV from Results history.
 
 If audience voting fails while the operator remains connected, collect the choice in the room, close the vote, use **Use this outcome**, reveal, and continue. If the operator loses its connection, call the path manually, keep the last Stage Direction visible, and reconnect. The operator’s **Connection problem?** panel keeps these steps on screen. The visible join URL is the fallback if the external QR image service is unavailable.
 
@@ -86,7 +88,7 @@ The app now contains Polls 1–8 from the September 21 script plus the script’
 
 The audience-facing wording is a concise adaptation of the supplied script. Tory supplies and approves final artistic/performance requirements and exact choice wording; Kaela facilitates and product-manages the prototype and readiness process. Technical ownership remains unassigned until explicitly decided.
 
-The backstage page intentionally does not identify whether an outcome was manually selected. It shows only a concise branch label, the matching script colour where specified, and the current script page. That operational detail is recorded only on the protected results page. The audience page retains the original restrained gold-and-parchment treatment.
+The backstage page intentionally does not identify whether an outcome was manually selected. It shows only a concise branch label, the matching script colour where specified, and the current script page. That operational detail is recorded only on the protected results page. The audience page uses a dark, candlelit parchment treatment with restrained compass and filigree movement; voting remains high-contrast and calm after confirmation.
 
 To make an approved wording or routing change, edit `src/story.js`. Each prompt needs a stable `id`, audience-facing copy, and options. Each option’s `nextPromptId` points to another prompt or is `null` when that path ends.
 

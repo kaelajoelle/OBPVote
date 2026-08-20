@@ -42,6 +42,28 @@ Do not start before collecting readthrough observations.
 3. Decide whether realtime push is worth replacing one-second polling.
 4. Convert validated needs into a production roadmap.
 
+### Audience experience pass — implemented, awaiting rehearsal acceptance
+
+The experience surrounding the approved story choices has been implemented. The exact prompt and option wording reviewed with Tory remains unchanged; any later copy changes still require a separate review.
+
+1. **Completed: hold the audience journey recap until after final bows.**
+   - During the performance, phones should show only the audience member’s latest submitted choice and a clear prompt to return attention to the stage.
+   - Add a deliberate Stage Manager/operator action to release the complete journey after the final bows; completing the final poll alone must not reveal it.
+   - Preserve a simple manual fallback if the post-bows release cue is missed.
+2. **Completed: create a shareable Instagram Story journey card.**
+   - Export a polished 9:16 image (target 1080 × 1920) rather than a screenshot of the results page.
+   - Use the OBP logo and brand palette, a fantasy-map/path motif, the audience member’s selected journey highlights, and a tasteful OBP marketing line or handle.
+   - Review spoiler exposure, readability, image-download behaviour on iPhone and Android, and whether an optional share action is useful after download.
+3. **Completed: establish the Adventurer and Path identity.**
+   - The phone uses a candlelit parchment, compass, and filigree treatment while the public language calls participants **Adventurers** and centres the **Path**.
+   - “Be part of the story” has been removed from the audience surface and social metadata.
+   - Motion remains restrained during the show and respects reduced-motion preferences.
+4. **Partially completed: dedicated audience-language pass.**
+   - Aim for accessible, semi-D&D fantasy language: adventurous and immersive, but brief enough to understand at a glance in a dark theatre.
+   - The surrounding welcome, standby, confirmation, connection, final-bows, and post-show language now follows the agreed direction.
+   - Exact prompts and option labels approved with Tory remain locked for a later side-by-side copy review.
+   - Tory owns artistic approval; Kaela facilitates the copy review and acceptance.
+
 ## Role boundaries
 
 - **Tory — artistic/performance requirements:** what choices mean, exact on-stage wording, cue timing, acceptable fallback, and artistic acceptance.

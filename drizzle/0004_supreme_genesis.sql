@@ -1,0 +1,1 @@
+ALTER TABLE `performance_session` ADD `recap_released_at` integer;

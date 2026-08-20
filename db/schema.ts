@@ -8,6 +8,7 @@ export const performanceSession = sqliteTable("performance_session", {
   reportCode: text("report_code"),
   audienceCode: text("audience_code"),
   startedAt: integer("started_at"),
+  recapReleasedAt: integer("recap_released_at"),
   historyJson: text("history_json").notNull().default("[]"),
   updatedAt: integer("updated_at").notNull()
 });

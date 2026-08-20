@@ -11,6 +11,7 @@ export class VoteSession {
     this.audienceHistory = new Map();
     this.manualOutcomeId = null;
     this.history = [];
+    this.recapReleased = false;
   }
 
   get prompt() {
@@ -54,6 +55,7 @@ export class VoteSession {
     if (!this.story.prompts.some((prompt) => prompt.id === promptId)) throw new Error("That vote is not available.");
     this.currentPromptId = promptId;
     this.status = "ready";
+    this.recapReleased = false;
     this.votes.clear();
     this.manualOutcomeId = null;
   }
@@ -99,22 +101,36 @@ export class VoteSession {
     this.manualOutcomeId = null;
   }
 
+  releaseRecap() {
+    if (this.status !== "complete") throw new Error("Finish the story before releasing the post-show journey.");
+    if (!this.history.length) throw new Error("There are no completed choices to release.");
+    this.recapReleased = true;
+  }
+
   publicState(audienceId = null) {
     const yourChoiceId = audienceId ? this.votes.get(audienceId) : null;
     const yourChoice = yourChoiceId ? this.prompt?.options.find((option) => option.id === yourChoiceId) : null;
-    const journeyResults = this.status === "complete" ? this.history.map((entry) => {
+    const journeyResults = this.status === "complete" && this.recapReleased ? this.history.map((entry) => {
       const prompt = this.story.prompts.find((item) => item.id === entry.promptId);
       const audienceChoice = prompt?.options.find((option) => option.id === entry.winnerId);
       const completedChoiceId = audienceId ? this.audienceHistory.get(`${entry.promptId}:${audienceId}`) : null;
       const completedChoice = prompt?.options.find((option) => option.id === completedChoiceId);
       const totalVotes = Object.values(entry.votes).reduce((total, count) => total + count, 0);
       const winnerVotes = entry.votes[entry.winnerId] || 0;
+      const yourVotes = entry.votes[completedChoice?.id] || 0;
       return {
         pollNumber: prompt?.pollNumber ?? "?",
         promptLabel: prompt?.title ?? entry.promptId,
         yourChoice: completedChoice ? { id: completedChoice.id, label: completedChoice.label } : null,
         audienceChoice: audienceChoice ? { id: audienceChoice.id, label: audienceChoice.label } : null,
-        audiencePercentage: totalVotes > 0 ? Math.round((winnerVotes / totalVotes) * 100) : 0
+        audiencePercentage: totalVotes > 0 ? Math.round((winnerVotes / totalVotes) * 100) : 0,
+        yourPercentage: totalVotes > 0 ? Math.round((yourVotes / totalVotes) * 100) : 0,
+        options: prompt?.options.map((option) => ({
+          id: option.id,
+          label: option.label,
+          count: Number(entry.votes[option.id] || 0),
+          percentage: totalVotes > 0 ? Math.round((Number(entry.votes[option.id] || 0) / totalVotes) * 100) : 0
+        })) ?? []
       };
     }) : null;
     return {
@@ -122,7 +138,8 @@ export class VoteSession {
       prompt: this.prompt,
       hasVoted: Boolean(yourChoice),
       yourChoice: yourChoice ? { id: yourChoice.id, label: yourChoice.label } : null,
-      journeyResults
+      journeyResults,
+      recapReleased: this.recapReleased
     };
   }
 

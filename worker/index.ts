@@ -16,6 +16,7 @@ interface SessionRow {
   report_code: string | null;
   audience_code: string | null;
   started_at: number | null;
+  recap_released_at: number | null;
   history_json: string;
   updated_at: number;
 }
@@ -51,6 +52,7 @@ const sessionSchema = `CREATE TABLE IF NOT EXISTS performance_session (
   report_code TEXT,
   audience_code TEXT,
   started_at INTEGER,
+  recap_released_at INTEGER,
   history_json TEXT NOT NULL DEFAULT '[]',
   updated_at INTEGER NOT NULL
 )`;
@@ -246,7 +248,8 @@ async function publicState(env: Env, audienceId: string | null, suppliedCode: st
   }
 
   let journeyResults = null;
-  if (session.status === "complete") {
+  const recapReleased = session.status === "complete" && Boolean(session.recap_released_at);
+  if (recapReleased) {
     const completedChoices = new Map<string, string>();
     if (audienceId && history.length) {
       const placeholders = history.map(() => "?").join(", ");
@@ -261,12 +264,20 @@ async function publicState(env: Env, audienceId: string | null, suppliedCode: st
       const audienceChoice = completedPrompt?.options.find((option) => option.id === entry.winnerId);
       const completedTotal = Object.values(entry.votes || {}).reduce((total, count) => total + Number(count), 0);
       const winnerVotes = Number(entry.votes?.[entry.winnerId] || 0);
+      const yourVotes = Number(entry.votes?.[completedChoice?.id || ""] || 0);
       return {
         pollNumber: completedPrompt?.pollNumber ?? "?",
         promptLabel: completedPrompt?.title ?? entry.promptId,
         yourChoice: completedChoice ? { id: completedChoice.id, label: completedChoice.label } : null,
         audienceChoice: audienceChoice ? { id: audienceChoice.id, label: audienceChoice.label } : null,
-        audiencePercentage: completedTotal > 0 ? Math.round((winnerVotes / completedTotal) * 100) : 0
+        audiencePercentage: completedTotal > 0 ? Math.round((winnerVotes / completedTotal) * 100) : 0,
+        yourPercentage: completedTotal > 0 ? Math.round((yourVotes / completedTotal) * 100) : 0,
+        options: completedPrompt?.options.map((option) => ({
+          id: option.id,
+          label: option.label,
+          count: Number(entry.votes?.[option.id] || 0),
+          percentage: completedTotal > 0 ? Math.round((Number(entry.votes?.[option.id] || 0) / completedTotal) * 100) : 0
+        })) ?? []
       };
     });
   }
@@ -277,7 +288,13 @@ async function publicState(env: Env, audienceId: string | null, suppliedCode: st
     prompt,
     hasVoted: Boolean(yourChoice),
     yourChoice,
-    journeyResults
+    journeyResults,
+    historyCount: history.length,
+    recapReleased,
+    performance: {
+      startedAt: session.started_at,
+      audienceCode: recapReleased ? session.audience_code : null
+    }
   };
 }
 
@@ -352,6 +369,7 @@ async function operatorState(env: Env, origin: string) {
       reportCode: session.report_code,
       audienceCode: session.audience_code,
       startedAt: session.started_at,
+      recapReleasedAt: session.recap_released_at,
       audienceDevices: Number(audienceDevices?.total || 0)
     },
     archives: await getArchives(env),
@@ -400,7 +418,7 @@ async function archiveAndResetPerformance(env: Env, session: SessionRow, now: nu
     env.DB.prepare(`UPDATE performance_session
       SET current_prompt_id = ?, status = 'ready', manual_outcome_id = NULL,
         report_code = NULL, audience_code = NULL, started_at = NULL,
-        history_json = '[]', updated_at = ? WHERE id = 1`)
+        recap_released_at = NULL, history_json = '[]', updated_at = ? WHERE id = 1`)
       .bind(story.startPromptId, now)
   );
   await env.DB.batch(statements);
@@ -468,7 +486,8 @@ async function handleApi(request: Request, env: Env) {
       env.DB.prepare("DELETE FROM votes"),
       env.DB.prepare(`UPDATE performance_session
         SET current_prompt_id = ?, status = 'ready', manual_outcome_id = NULL,
-          report_code = ?, audience_code = ?, started_at = ?, history_json = '[]', updated_at = ?
+          report_code = ?, audience_code = ?, started_at = ?, recap_released_at = NULL,
+          history_json = '[]', updated_at = ?
         WHERE id = 1`)
         .bind(story.startPromptId, reportCode, generateAudienceCode(), now, now)
     ]);
@@ -476,6 +495,11 @@ async function handleApi(request: Request, env: Env) {
     await archiveAndResetPerformance(env, session, now);
   } else if (!session.audience_code || !session.report_code) {
     return json({ error: "Start a performance before using show controls." }, 400);
+  } else if (action === "release-recap") {
+    if (session.status !== "complete") return json({ error: "Finish the story before releasing the post-show journey." }, 400);
+    if (!parseHistory(session.history_json).length) return json({ error: "There are no completed choices to release." }, 400);
+    await env.DB.prepare("UPDATE performance_session SET recap_released_at = ?, updated_at = ? WHERE id = 1")
+      .bind(now, now).run();
   } else if (action === "open") {
     if (!prompt) return json({ error: "There is no current choice to open." }, 400);
     await env.DB.batch([
@@ -520,7 +544,8 @@ async function handleApi(request: Request, env: Env) {
     }
     if (!story.prompts.some((item) => item.id === body.promptId)) return json({ error: "That vote is not available." }, 400);
     await env.DB.prepare(`UPDATE performance_session
-      SET current_prompt_id = ?, status = 'ready', manual_outcome_id = NULL, updated_at = ? WHERE id = 1`)
+      SET current_prompt_id = ?, status = 'ready', manual_outcome_id = NULL,
+        recap_released_at = NULL, updated_at = ? WHERE id = 1`)
       .bind(body.promptId, now).run();
   } else if (action === "skip") {
     if (!prompt) return json({ error: "There is no current vote to skip." }, 400);
