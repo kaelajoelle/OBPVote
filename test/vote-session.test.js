@@ -55,6 +55,15 @@ test("contains the eight numbered script polls plus the conditional 4.5 vote", (
   assert.deepEqual(story.prompts.map((prompt) => prompt.pollNumber), ["1", "2", "3", "4", "4.5", "5", "6", "7", "8"]);
 });
 
+test("every outcome has a concise backstage label and outline colour", () => {
+  for (const prompt of story.prompts) {
+    for (const option of prompt.options) {
+      assert.ok(option.stageLabel);
+      assert.match(option.stageColor, /^#[0-9a-f]{6}$/i);
+    }
+  }
+});
+
 test("operator can load any scripted vote while voting is not open", () => {
   const session = new VoteSession(story);
   session.selectPrompt("poll-7-stories");

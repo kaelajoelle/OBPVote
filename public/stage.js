@@ -1,6 +1,7 @@
 const login = document.querySelector("#stage-login");
 const display = document.querySelector("#stage-display");
 const keyInput = document.querySelector("#stage-key");
+const stageBrand = document.querySelector(".stage-brand");
 let showKey = sessionStorage.getItem("obp-stage-key") || "";
 keyInput.value = showKey;
 
@@ -18,29 +19,17 @@ async function getState() {
   return result;
 }
 
-function activityMessage(state) {
-  if (state.status === "open") return "Audience vote in progress";
-  if (state.status === "closed") return "Vote closed — awaiting reveal";
-  if (state.status === "revealed") return "New direction revealed";
-  if (state.status === "complete") return "Performance path complete";
-  if (state.currentPoll) return `Next vote: Poll ${escapeHtml(state.currentPoll.pollNumber)} — ${escapeHtml(state.currentPoll.label)}`;
-  return "Stand by";
-}
-
 function render(state) {
   const direction = state.direction;
   display.innerHTML = direction ? `
     <section class="stage-direction" style="--stage-accent:${escapeHtml(direction.stageColor)}">
-      <p class="status">Current script direction</p>
+      <p class="status">Current direction</p>
+      <h2 class="stage-choice">${escapeHtml(direction.stageLabel)}</h2>
       ${direction.scriptColor ? `<p class="script-colour">${escapeHtml(direction.scriptColor)}</p>` : ""}
-      <h2>${escapeHtml(direction.stageDirection)}</h2>
-      <p class="stage-outcome">Audience choice: <strong>${escapeHtml(direction.outcomeLabel)}</strong></p>
-      <div class="stage-activity">${activityMessage(state)}</div>
     </section>` : `
     <section class="stage-direction waiting">
       <p class="status">Stand by</p>
-      <h2>No direction has been revealed yet.</h2>
-      <div class="stage-activity">${activityMessage(state)}</div>
+      <h2 class="stage-choice">Waiting for result</h2>
     </section>`;
 }
 
@@ -50,6 +39,7 @@ async function connect() {
     const state = await getState();
     sessionStorage.setItem("obp-stage-key", showKey);
     login.hidden = true;
+    stageBrand.hidden = true;
     display.hidden = false;
     render(state);
   } catch (error) {

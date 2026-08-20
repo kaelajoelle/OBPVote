@@ -82,6 +82,7 @@ function outcomeDetails(promptId: string, winnerId: string) {
     outcomeLabel: option.label,
     scriptColor: option.scriptColor,
     stageColor: option.stageColor,
+    stageLabel: option.stageLabel,
     stageDirection: option.stageDirection
   };
 }

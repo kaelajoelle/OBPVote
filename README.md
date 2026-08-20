@@ -35,7 +35,7 @@ The current scaffold implements these as audience, operator, backstage, and resu
 | --- | --- | --- |
 | `/` | Audience voting, vote confirmation, and revealed result | Public / QR |
 | `/operator.html` | Load, open, close, resolve, reveal, advance, and review results | Show key |
-| `/stage.html` | Large auto-updating script colour or direction for cast and stage management | Show key |
+| `/stage.html` | Large auto-updating branch name and script colour with a matching outline | Show key |
 | `/results.html` | Current and archived run totals that refresh only on request | Show key |
 
 The operator page links to **Results history** in a new tab. Its archived-run accordions stay open because the results page refreshes only when **Refresh results** is pressed. **Archive & reset** stores the completed run before returning the show to Poll 1.
@@ -78,7 +78,7 @@ The app now contains Polls 1–8 from the September 21 script plus the script’
 
 The audience-facing wording is a concise adaptation of the supplied script. Tory supplies and approves final artistic/performance requirements and exact choice wording; Kaela facilitates and product-manages the prototype and readiness process. Technical ownership remains unassigned until explicitly decided.
 
-The backstage page intentionally does not identify whether an outcome was manually selected. That operational detail is recorded only on the protected results page. Script colours are shown only where the supplied script explicitly names one; other branches display a plain-language direction until Tory approves additional colour mappings.
+The backstage page intentionally does not identify whether an outcome was manually selected. It shows only a concise branch label and, where the script specifies one, the script colour in a matching outline. That operational detail is recorded only on the protected results page. The audience page uses the gold, burgundy, teal, green, purple, blue, and steel palette drawn from the OBP shield.
 
 To make an approved wording or routing change, edit `src/story.js`. Each prompt needs a stable `id`, audience-facing copy, and options. Each option’s `nextPromptId` points to another prompt or is `null` when that path ends.
 

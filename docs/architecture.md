@@ -16,7 +16,7 @@ This is intentionally a prototype architecture for the September 21 readthrough.
 
 - `/`: audience view. Shows the current open choice, accepts one vote per browser per round, and displays the chosen result after the operator reveals it.
 - `/operator.html`: operator view. Opens and closes voting, sees live totals, chooses a manual outcome when needed, reveals the result, advances the branch, and reviews current and archived runs.
-- `/stage.html`: read-only backstage view. Keeps the latest approved script colour or direction visible for cast and stage management without exposing manual-override information.
+- `/stage.html`: read-only backstage view. Keeps only the latest concise branch label and script colour visible inside a matching outline, without exposing manual-override information.
 - `/results.html`: protected results view. Loads current and archived totals on demand so archive accordions are not disrupted by live polling.
 
 ## Data and state
