@@ -6,7 +6,7 @@ export const story = {
       pollNumber: "1",
       operatorLabel: "Opening location",
       title: "Where should we begin?",
-      question: "Choose the Companions’ first path.",
+      question: "Choose Wisely.",
       options: [
         { id: "enchantress", label: "Glade of Paranor — The Enchantress", nextPromptId: "poll-2-song", scriptColor: "BLOSSOM", stageColor: "#d989a6", stageLabel: "ENCHANTRESS", pageNumber: 10, stageDirection: "Follow the Glade of Paranor branch" },
         { id: "hag", label: "Flamespun Ruins — The Hag", nextPromptId: "poll-2-song", scriptColor: "OLIVE", stageColor: "#1f5a42", stageLabel: "HAG", pageNumber: 7, stageDirection: "Follow the Flamespun Ruins branch" }
