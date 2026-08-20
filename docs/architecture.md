@@ -2,15 +2,15 @@
 
 ## Decision
 
-Use one dependency-free Node.js service that serves two browser views and owns a single in-memory performance session.
+Use one edge-hosted web service that serves two browser views and owns a single database-backed performance session.
 
 ```text
 Audience phones ──poll/submit──┐
-                              ├── Node service ── in-memory session + scripted choices
-Operator browser ──control────┘
+                              ├── Hosted worker ── D1 session + votes
+Operator browser ──control────┘                   └── scripted choices
 ```
 
-This is intentionally a prototype architecture for the September 21 readthrough. It minimizes setup, moving parts, and failure modes. A later production version can replace polling and in-memory state with realtime messaging and persistent storage without changing the audience workflow.
+This is intentionally a prototype architecture for the September 21 readthrough. It minimizes moving parts while keeping the active vote shared across audience and operator devices. A later production version can replace polling with realtime messaging without changing the audience workflow.
 
 ## Views
 
@@ -20,10 +20,10 @@ This is intentionally a prototype architecture for the September 21 readthrough.
 ## Data and state
 
 - Scripted prompts and branch links live in `src/story.js`.
-- The server holds one active session in memory.
+- D1 holds one active performance session, its votes, and completed-round history.
 - Each audience browser creates a random local ID. The server accepts one vote from that ID in each round.
 - Refreshing a browser preserves its vote; clearing browser storage creates a new ID. This is sufficient for a supervised readthrough, not a fraud-resistant election.
-- Restarting the server resets the session. The operator reset button does the same intentionally.
+- Publishing or restarting the hosted worker does not discard the current session. The operator reset button resets it intentionally.
 
 ## Rehearsal safeguards
 
@@ -34,7 +34,7 @@ This is intentionally a prototype architecture for the September 21 readthrough.
 
 ## Deployment shape
 
-Run one Node 20+ process on a host reachable by audience phones. Set `PUBLIC_BASE_URL` to its HTTPS URL so the operator QR code points to the correct place. No database or build step is required.
+The app is published as a Cloudflare-compatible worker with an HTTPS audience URL. The operator QR code derives its join link from the live site address automatically.
 
 ## Deliberately out of scope
 

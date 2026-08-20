@@ -23,16 +23,15 @@ The initial repository plan is preserved in these three surfaces:
 - **Show Control:** current vote, open, close, results, and choosing the next vote.
 - **Shared System:** current performance, vote definitions, vote submissions, and current voting state.
 
-The current scaffold implements these as one audience page, one operator page, and one shared in-memory session.
+The current scaffold implements these as one audience page, one operator page, and one shared hosted voting session.
 
 ## Run locally
 
-Requires Node.js 20 or newer. There are no packages to install.
+Requires Node.js 22.13 or newer.
 
 ```powershell
-$env:OPERATOR_KEY = "choose-a-rehearsal-key"
-$env:PUBLIC_BASE_URL = "http://localhost:3000"
-npm start
+npm install
+npm run dev
 ```
 
 Open:
@@ -40,7 +39,7 @@ Open:
 - Audience: `http://localhost:3000`
 - Operator: `http://localhost:3000/operator.html`
 
-If `OPERATOR_KEY` is omitted, local development uses `rehearsal`. Always set a different value on a shared deployment.
+If `OPERATOR_KEY` is omitted, local development uses `rehearsal`. The hosted deployment uses a configured rehearsal key. Always set a different value for a production show.
 
 ## Rehearsal flow
 

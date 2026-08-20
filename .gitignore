@@ -4,6 +4,9 @@ node_modules/
 Thumbs.db
 coverage/
 *.log
+dist/
+.next/
+.wrangler/
 
 # ChatGPT project mirror material; never publish with the app.
 sources/
