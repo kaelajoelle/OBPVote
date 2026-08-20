@@ -15,6 +15,16 @@ Included:
 
 Not included: accounts, payments, analytics, ticketing, durable results, simultaneous performances, or a script editor.
 
+## Prototype surfaces
+
+The initial repository plan is preserved in these three surfaces:
+
+- **Audience:** waiting state, test vote, active vote, and vote confirmation.
+- **Show Control:** current vote, open, close, results, and choosing the next vote.
+- **Shared System:** current performance, vote definitions, vote submissions, and current voting state.
+
+The current scaffold implements these as one audience page, one operator page, and one shared in-memory session.
+
 ## Run locally
 
 Requires Node.js 20 or newer. There are no packages to install.
@@ -59,4 +69,4 @@ See [MVP architecture](docs/architecture.md) and the [issue/milestone plan](docs
 
 ## Repository
 
-Prepared for [`kaelajoelle/OBPVote`](https://github.com/kaelajoelle/OBPVote). Publishing remains a separate step: review the scaffold, then explicitly authorize staging, committing, and pushing as desired.
+The MVP is developed in [`kaelajoelle/OBPVote`](https://github.com/kaelajoelle/OBPVote).
