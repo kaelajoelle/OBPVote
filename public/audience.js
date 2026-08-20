@@ -254,7 +254,7 @@ async function downloadJourney(state) {
 }
 
 function renderSealedChoice(state, status = "Path confirmed") {
-  setExperience("sealed", "Your choice is sealed.", state.yourChoice ? `
+  setExperience("sealed", "Their fate is sealed.", state.yourChoice ? `
     <p class="status success">${escapeHtml(status)}</p>
     <div class="result-reveal path-confirmation"><span>You chose</span><h2>${escapeHtml(state.yourChoice.label)}</h2></div>
     <p class="return-to-stage">Return your attention to the stage, Adventurer.<br />The path continues there.</p>` : `
