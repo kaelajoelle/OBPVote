@@ -41,8 +41,8 @@ export const story = {
       title: "An orc reaches for a battle horn.",
       question: "What should Khulgar do?",
       options: [
-        { id: "coin-purse", label: "Pick up the coin purse", nextPromptId: "poll-4-5-vial", scriptColor: Black, stageColor: "#d5aa58", stageLabel: "RING", pageNumber: 55, stageDirection: "Khulgar has the ring" },
-        { id: "run-to-camp", label: "Don’t chance it", nextPromptId: "poll-4-5-vial", scriptColor: black, stageColor: "#d5aa58", stageLabel: "NO RING", pageNumber: 55, stageDirection: "Khulgar does not have the ring" }
+        { id: "coin-purse", label: "Pick up the coin purse", nextPromptId: "poll-4-5-vial", scriptColor: Black, stageColor: "#000000", stageLabel: "RING", pageNumber: 55, stageDirection: "Khulgar has the ring" },
+        { id: "run-to-camp", label: "Don’t chance it", nextPromptId: "poll-4-5-vial", scriptColor: black, stageColor: "#000000", stageLabel: "NO RING", pageNumber: 55, stageDirection: "Khulgar does not have the ring" }
       ]
     },
     {
@@ -75,8 +75,8 @@ export const story = {
       title: "A caravan lies ahead.",
       question: "How should the Companions travel?",
       options: [
-        { id: "own-pace", label: "Travel at their own pace", nextPromptId: "poll-7-stories", scriptColor: lilac, stageColor: "#d5aa58", stageLabel: "OWN PACE", pageNumber: 90, stageDirection: "Follow the Travel at Their Own Pace direction" },
-        { id: "join-caravan", label: "Join the caravan", nextPromptId: "poll-7-stories", scriptColor: duck_egg, stageColor: "#d5aa58", stageLabel: "JOIN THE CARAVAN", pageNumber: 90, stageDirection: "Follow the Join the Caravan direction" }
+        { id: "own-pace", label: "Travel at their own pace", nextPromptId: "poll-7-stories", scriptColor: "LILAC", stageColor: "#9666d5", stageLabel: "OWN PACE", pageNumber: 90, stageDirection: "Follow the Travel at Their Own Pace direction" },
+        { id: "join-caravan", label: "Join the caravan", nextPromptId: "poll-7-stories", scriptColor: "DUCK EGG", stageColor: "#5d8aa8", stageLabel: "JOIN THE CARAVAN", pageNumber: 90, stageDirection: "Follow the Join the Caravan direction" }
       ]
     },
     {
@@ -99,8 +99,8 @@ export const story = {
       title: "Choose the tale that becomes a song.",
       question: "Which song should Anaax sing?",
       options: [
-        { id: "loss-and-love", label: "“Loss and Love”", nextPromptId: null, scriptColor: grey, stageColor: "#d5aa58", stageLabel: "HOW DO YOU WANT TO DO THIS", pageNumber: 107, stageDirection: "Continue with “How Do You Want To Do This?”" },
-        { id: "love-and-loss", label: "“Love and Loss”", nextPromptId: null, scriptColor: burgundy, stageColor: "#d5aa58", stageLabel: "LA DITTY HEY", pageNumber: 109, stageDirection: "Continue with “La Ditty Hey”" }
+        { id: "loss-and-love", label: "“Loss and Love”", nextPromptId: null, scriptColor: "GREY", stageColor: "#bebfc5", stageLabel: "HOW DO YOU WANT TO DO THIS", pageNumber: 107, stageDirection: "Continue with “How Do You Want To Do This?”" },
+        { id: "love-and-loss", label: "“Love and Loss”", nextPromptId: null, scriptColor: "BURGUNDY", stageColor: "#660000", stageLabel: "LA DITTY HEY", pageNumber: 109, stageDirection: "Continue with “La Ditty Hey”" }
       ]
     }
   ]
