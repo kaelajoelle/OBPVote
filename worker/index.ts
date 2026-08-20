@@ -175,6 +175,7 @@ async function getArchives(env: Env) {
 async function publicState(env: Env, audienceId: string | null) {
   const session = await getSession(env);
   const prompt = promptById(session.current_prompt_id);
+  const history = parseHistory(session.history_json);
   let yourChoice = null;
   if (audienceId && session.current_prompt_id) {
     const vote = await env.DB.prepare(
@@ -196,6 +197,32 @@ async function publicState(env: Env, audienceId: string | null) {
     totalVotes = Object.values(results).reduce((total, count) => total + count, 0);
   }
 
+  let journeyResults = null;
+  if (session.status === "complete") {
+    const completedChoices = new Map<string, string>();
+    if (audienceId && history.length) {
+      const placeholders = history.map(() => "?").join(", ");
+      const rows = await env.DB.prepare(
+        `SELECT prompt_id, option_id FROM votes WHERE audience_id = ? AND prompt_id IN (${placeholders})`
+      ).bind(audienceId, ...history.map((entry) => entry.promptId)).all<{ prompt_id: string; option_id: string }>();
+      for (const row of rows.results) completedChoices.set(row.prompt_id, row.option_id);
+    }
+    journeyResults = history.map((entry) => {
+      const completedPrompt = promptById(entry.promptId);
+      const completedChoice = completedPrompt?.options.find((option) => option.id === completedChoices.get(entry.promptId));
+      const audienceChoice = completedPrompt?.options.find((option) => option.id === entry.winnerId);
+      const completedTotal = Object.values(entry.votes || {}).reduce((total, count) => total + Number(count), 0);
+      const winnerVotes = Number(entry.votes?.[entry.winnerId] || 0);
+      return {
+        pollNumber: completedPrompt?.pollNumber ?? "?",
+        promptLabel: completedPrompt?.title ?? entry.promptId,
+        yourChoice: completedChoice ? { id: completedChoice.id, label: completedChoice.label } : null,
+        audienceChoice: audienceChoice ? { id: audienceChoice.id, label: audienceChoice.label } : null,
+        audiencePercentage: completedTotal > 0 ? Math.round((winnerVotes / completedTotal) * 100) : 0
+      };
+    });
+  }
+
   return {
     status: session.status,
     prompt,
@@ -203,7 +230,8 @@ async function publicState(env: Env, audienceId: string | null) {
     yourChoice,
     revealedOutcome,
     revealedResults,
-    totalVotes
+    totalVotes,
+    journeyResults
   };
 }
 

@@ -19,15 +19,6 @@ function render(state) {
     const totalVotes = Number(state.totalVotes || 0);
     const winnerCount = Number(state.revealedResults?.[state.revealedOutcome.id] || 0);
     const matched = state.yourChoice?.id === state.revealedOutcome.id;
-    const breakdown = state.prompt.options.map((option) => {
-      const count = Number(state.revealedResults?.[option.id] || 0);
-      const percent = percentage(count, totalVotes);
-      return `<div class="audience-result-row ${option.id === state.revealedOutcome.id ? "selected" : ""}">
-        <div><span>${escapeHtml(option.label)}</span><strong>${percent}%</strong></div>
-        <div class="bar" aria-hidden="true"><i style="width: ${percent}%"></i></div>
-        <small>${count} vote${count === 1 ? "" : "s"}</small>
-      </div>`;
-    }).join("");
     card.innerHTML = `
       <p class="status success">The audience has chosen</p>
       <div class="choice-comparison">
@@ -39,18 +30,23 @@ function render(state) {
           <span>Audience choice</span>
           <h2>${escapeHtml(state.revealedOutcome.label)}</h2>
           <strong>${percentage(winnerCount, totalVotes)}%</strong>
+          <small>${winnerCount} of ${totalVotes} votes</small>
         </div>
       </div>
       ${state.yourChoice ? `<p class="match-note">${matched ? "Your choice matched the audience." : "The adventure follows the audience’s choice."}</p>` : ""}
-      <div class="audience-breakdown">
-        <div class="breakdown-heading"><span>Final result</span><span>${totalVotes} total vote${totalVotes === 1 ? "" : "s"}</span></div>
-        ${breakdown}
-      </div>
       <p>Watch the stage as your choice becomes part of the story.</p>`;
     return;
   }
   if (state.status === "complete") {
-    card.innerHTML = `<p class="status">The path is chosen.</p><h2>Now watch how your choices unfold, adventurer.</h2>`;
+    const journey = (state.journeyResults || []).map((entry) => `
+      <article class="journey-item">
+        <div class="journey-heading"><span>Poll ${escapeHtml(entry.pollNumber)}</span><strong>${escapeHtml(entry.promptLabel)}</strong></div>
+        <dl>
+          <div><dt>Your choice</dt><dd>${escapeHtml(entry.yourChoice?.label || "No vote recorded")}</dd></div>
+          <div><dt>Audience choice</dt><dd>${escapeHtml(entry.audienceChoice?.label || "Not recorded")} <strong>${Number(entry.audiencePercentage || 0)}%</strong></dd></div>
+        </dl>
+      </article>`).join("");
+    card.innerHTML = `<p class="status">The path is chosen.</p><h2>Now watch how your choices unfold, adventurer.</h2>${journey ? `<section class="journey-summary"><div class="breakdown-heading"><span>Tonight’s path</span><span>${state.journeyResults.length} choices</span></div>${journey}</section>` : ""}`;
     return;
   }
   if (!state.prompt || state.status === "ready") {

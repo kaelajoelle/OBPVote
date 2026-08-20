@@ -8,6 +8,7 @@ export class VoteSession {
     this.currentPromptId = this.story.startPromptId;
     this.status = "ready";
     this.votes = new Map();
+    this.audienceHistory = new Map();
     this.manualOutcomeId = null;
     this.history = [];
   }
@@ -88,6 +89,9 @@ export class VoteSession {
     const winnerId = this.winnerId();
     if (!winnerId) throw new Error("Choose a manual outcome to resolve a tie or empty vote.");
     const option = this.prompt.options.find((item) => item.id === winnerId);
+    for (const [audienceId, optionId] of this.votes) {
+      this.audienceHistory.set(`${this.prompt.id}:${audienceId}`, optionId);
+    }
     this.history.push({ promptId: this.prompt.id, winnerId, votes: this.results(), manual: Boolean(this.manualOutcomeId) });
     this.currentPromptId = option.nextPromptId;
     this.status = option.nextPromptId ? "ready" : "complete";
@@ -101,6 +105,21 @@ export class VoteSession {
     const yourChoiceId = audienceId ? this.votes.get(audienceId) : null;
     const yourChoice = yourChoiceId ? this.prompt?.options.find((option) => option.id === yourChoiceId) : null;
     const revealedResults = this.status === "revealed" ? this.results() : null;
+    const journeyResults = this.status === "complete" ? this.history.map((entry) => {
+      const prompt = this.story.prompts.find((item) => item.id === entry.promptId);
+      const audienceChoice = prompt?.options.find((option) => option.id === entry.winnerId);
+      const completedChoiceId = audienceId ? this.audienceHistory.get(`${entry.promptId}:${audienceId}`) : null;
+      const completedChoice = prompt?.options.find((option) => option.id === completedChoiceId);
+      const totalVotes = Object.values(entry.votes).reduce((total, count) => total + count, 0);
+      const winnerVotes = entry.votes[entry.winnerId] || 0;
+      return {
+        pollNumber: prompt?.pollNumber ?? "?",
+        promptLabel: prompt?.title ?? entry.promptId,
+        yourChoice: completedChoice ? { id: completedChoice.id, label: completedChoice.label } : null,
+        audienceChoice: audienceChoice ? { id: audienceChoice.id, label: audienceChoice.label } : null,
+        audiencePercentage: totalVotes > 0 ? Math.round((winnerVotes / totalVotes) * 100) : 0
+      };
+    }) : null;
     return {
       status: this.status,
       prompt: this.prompt,
@@ -108,7 +127,8 @@ export class VoteSession {
       yourChoice: yourChoice ? { id: yourChoice.id, label: yourChoice.label } : null,
       revealedOutcome: revealedOutcome ? { id: revealedOutcome.id, label: revealedOutcome.label } : null,
       revealedResults,
-      totalVotes: revealedResults ? this.votes.size : null
+      totalVotes: revealedResults ? this.votes.size : null,
+      journeyResults
     };
   }
 

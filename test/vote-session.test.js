@@ -102,3 +102,22 @@ test("skipping the final poll completes the story", () => {
   assert.equal(session.currentPromptId, null);
   assert.equal(session.status, "complete");
 });
+
+test("audience receives a personal journey summary when the story completes", () => {
+  const session = new VoteSession(story);
+  session.selectPrompt("poll-8-song");
+  session.open();
+  session.castVote("a", "love-and-loss");
+  session.castVote("b", "love-and-loss");
+  session.castVote("c", "loss-and-love");
+  session.close();
+  session.reveal();
+  session.advance();
+  assert.deepEqual(session.publicState("c").journeyResults, [{
+    pollNumber: "8",
+    promptLabel: "Choose the tale that becomes a song.",
+    yourChoice: { id: "loss-and-love", label: "“Loss and Love”" },
+    audienceChoice: { id: "love-and-loss", label: "“Love and Loss”" },
+    audiencePercentage: 67
+  }]);
+});
