@@ -26,16 +26,19 @@ Target: September 21. Exit condition: the Companions complete a timed rehearsal 
 
 6. **Completed: add connection health and Stage Direction heartbeat indicators.**
    - The operator distinguishes connected, reconnecting, offline, and unknown states while retaining last-known show information.
-7. Add a one-click export of the configured story map for rehearsal review.
-8. Test legibility on the oldest/smallest audience phone available.
-9. Add a deployment smoke test and a short pre-show checklist.
+7. **Completed: add show-specific performance records and audience codes.**
+   - The Stage Manager’s report reference labels one run; the generated audience code and QR admit phones only to that active performance.
+8. **Completed: add show-report handoff exports.**
+   - Results history provides a copy-ready summary and CSV for current and archived runs without becoming a full show-report system.
+9. Test legibility on the oldest/smallest audience phone available.
+10. Add a deployment smoke test and a short pre-show checklist.
 
 ## Milestone: Post-readthrough decisions
 
 Do not start before collecting readthrough observations.
 
 1. Decide technical ownership and hosting responsibility.
-2. Review whether the simple archived result summaries are sufficient or need export/multiple simultaneous performances.
+2. Review whether the copy-ready summary and CSV are sufficient or need a formatted PDF/integration.
 3. Decide whether realtime push is worth replacing one-second polling.
 4. Convert validated needs into a production roadmap.
 

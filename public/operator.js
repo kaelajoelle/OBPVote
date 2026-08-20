@@ -3,6 +3,7 @@ const panel = document.querySelector("#operator-panel");
 const keyInput = document.querySelector("#operator-key");
 let operatorKey = sessionStorage.getItem("obp-operator-key") || "";
 let showMode = sessionStorage.getItem("obp-show-mode") === "true";
+let recoveryOpen = sessionStorage.getItem("obp-recovery-open") === "true";
 let lastState = null;
 let lastSyncAt = null;
 let connectionFailureSince = null;
@@ -92,8 +93,50 @@ function updateLiveStatus() {
   }
 }
 
+function connectionMarkup() {
+  return `<div class="connection-row" aria-label="Connection health">
+    <div id="operator-connectivity" class="connection-pill" role="status"><span class="connection-dot" aria-hidden="true"></span><span class="connection-label">Checking operator…</span></div>
+    <div id="operator-stage-connectivity" class="connection-pill" role="status"><span class="connection-dot" aria-hidden="true"></span><span class="connection-label">Checking stage display…</span></div>
+  </div>`;
+}
+
+function renderPerformanceSetup(state) {
+  const needsCleanup = state.history.length > 0 || !["ready", "complete"].includes(state.status);
+  panel.className = "card operator-panel";
+  panel.innerHTML = `
+    <div class="operator-command-bar">
+      <div><p class="eyebrow">Performance setup</p><div class="operator-state-line"><span class="status">Ready to begin</span></div></div>
+    </div>
+    ${connectionMarkup()}
+    ${needsCleanup ? `<section class="performance-setup">
+      <p class="eyebrow">Previous session found</p>
+      <h2>Prepare the new performance setup.</h2>
+      <p>${state.history.length ? "Archive the existing voting history" : "Clear the unfinished voting state"} before creating a labelled performance and audience code.</p>
+      <button class="secondary" data-action="reset" type="button">${state.history.length ? "Archive previous session" : "Clear previous session"}</button>
+    </section>` : `<section class="performance-setup">
+      <p class="eyebrow">New performance</p>
+      <h2>Start tonight’s voting</h2>
+      <p>Enter the same reference the Stage Manager will use in the show report. The audience code and QR will be created automatically.</p>
+      <label for="report-code">Show-report reference</label>
+      <div class="inline-control">
+        <input id="report-code" type="text" maxlength="80" placeholder="Example: OBP-SEP21-EVE" autocomplete="off" />
+        <button data-action="start" type="button">Start performance</button>
+      </div>
+      <p class="fine-print">This reference labels the saved results and exports. It is not a password and the audience will not see it.</p>
+    </section>`}
+    <nav class="quick-links" aria-label="Show pages">
+      <a href="${escapeHtml(state.resultsUrl)}" target="_blank" rel="noreferrer"><span>Results history</span><small>Review and export saved performances</small></a>
+      <a href="${escapeHtml(state.stageUrl)}" target="_blank" rel="noreferrer"><span>Stage Direction</span><small>Cast and stage-manager direction</small></a>
+    </nav>`;
+  updateLiveStatus();
+}
+
 function render(state) {
   lastState = state;
+  if (!state.performance?.started) {
+    renderPerformanceSetup(state);
+    return;
+  }
   const prompt = state.prompt;
   const maxVotes = Math.max(1, ...Object.values(state.results || {}));
   const canLoadPrompt = ["ready", "complete"].includes(state.status);
@@ -128,10 +171,16 @@ function render(state) {
       </div>
       <button class="secondary mode-toggle" data-ui-action="toggle-show-mode">${showMode ? "Exit Show Mode" : "Enter Show Mode"}</button>
     </div>
-    <div class="connection-row" aria-label="Connection health">
-      <div id="operator-connectivity" class="connection-pill" role="status"><span class="connection-dot" aria-hidden="true"></span><span class="connection-label">Checking operator…</span></div>
-      <div id="operator-stage-connectivity" class="connection-pill" role="status"><span class="connection-dot" aria-hidden="true"></span><span class="connection-label">Checking stage display…</span></div>
-    </div>
+    ${connectionMarkup()}
+    <section class="performance-strip">
+      <div><span>Show report</span><strong>${escapeHtml(state.performance.reportCode)}</strong></div>
+      <div><span>Audience code</span><strong class="audience-code">${escapeHtml(state.performance.audienceCode)}</strong></div>
+      <div><span>Joined devices</span><strong>${Number(state.performance.audienceDevices || 0)}</strong></div>
+      <div class="performance-strip-actions">
+        <button class="secondary" type="button" data-ui-action="copy-audience-code">Copy code</button>
+        <button class="secondary setup-only" type="button" data-ui-action="copy-audience-link">Copy join link</button>
+      </div>
+    </section>
     ${state.status === "open" ? `<p id="vote-timer" class="vote-timer">Voting open · ${formatDuration((Date.now() - Number(state.statusSince || Date.now())) / 1000)}</p>` : ""}
     <section class="cue-control setup-only">
       <label for="prompt-picker">Vote to load on audience phones</label>
@@ -147,9 +196,9 @@ function render(state) {
     <div class="operator-actions">
       ${primaryAction}
       ${canSkipPrompt ? `<button class="secondary" data-action="skip">Skip Poll ${escapeHtml(prompt.pollNumber)}</button>` : ""}
-      <button class="secondary setup-only" data-action="reset">${state.history.length ? "Archive & reset" : "Reset story"}</button>
+      <button class="secondary setup-only" data-action="reset">${state.history.length ? "Archive & end performance" : "End performance"}</button>
     </div>
-    <details class="recovery-panel">
+    <details class="recovery-panel" ${recoveryOpen ? "open" : ""}>
       <summary>Connection problem?</summary>
       <div class="recovery-content">
         <p><strong>Audience issue while the operator is connected:</strong> collect a show of hands, close the vote, use the chosen outcome, reveal, and continue.</p>
@@ -162,7 +211,7 @@ function render(state) {
       <a href="${escapeHtml(state.resultsUrl)}" target="_blank" rel="noreferrer"><span>Results history</span><small>Current and archived run totals</small></a>
     </nav>
     <aside class="join-panel setup-only">
-      <div><span class="eyebrow">Audience join link</span><a href="${escapeHtml(state.joinUrl)}">${escapeHtml(state.joinUrl)}</a></div>
+      <div><span class="eyebrow">Audience code · ${escapeHtml(state.performance.audienceCode)}</span><a href="${escapeHtml(state.joinUrl)}">${escapeHtml(state.joinUrl)}</a></div>
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(state.joinUrl)}" alt="QR code for the audience join link" />
       <p class="fine-print">If the QR service is unavailable, display or announce the join link.</p>
     </aside>`;
@@ -187,6 +236,19 @@ document.querySelector("#connect").addEventListener("click", connect);
 keyInput.addEventListener("input", () => keyInput.setCustomValidity(""));
 panel.addEventListener("click", async (event) => {
   const uiButton = event.target.closest("[data-ui-action]");
+  if (uiButton?.dataset.uiAction === "copy-audience-code" || uiButton?.dataset.uiAction === "copy-audience-link") {
+    const value = uiButton.dataset.uiAction === "copy-audience-code" ? lastState?.performance?.audienceCode : lastState?.joinUrl;
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      const original = uiButton.textContent;
+      uiButton.textContent = "Copied ✓";
+      setTimeout(() => { uiButton.textContent = original; }, 1400);
+    } catch {
+      alert(value);
+    }
+    return;
+  }
   if (uiButton?.dataset.uiAction === "toggle-show-mode") {
     showMode = !showMode;
     sessionStorage.setItem("obp-show-mode", String(showMode));
@@ -197,7 +259,10 @@ panel.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-action]");
   if (!button || button.disabled) return;
   if (button.dataset.action === "reset") {
-    const message = lastState?.history.length ? "Archive this run’s completed results and reset to Poll 1?" : "Reset the story to Poll 1?";
+    const performanceLabel = lastState?.performance?.reportCode || "the previous session";
+    const message = lastState?.history.length
+      ? `Archive ${performanceLabel} and end this performance?`
+      : `End ${performanceLabel} without saving an empty run?`;
     if (!confirm(message)) return;
   }
   if (button.dataset.action === "skip") {
@@ -209,6 +274,7 @@ panel.addEventListener("click", async (event) => {
     let body = {};
     if (button.dataset.optionId) body = { optionId: button.dataset.optionId };
     if (button.dataset.action === "select") body = { promptId: panel.querySelector("#prompt-picker").value };
+    if (button.dataset.action === "start") body = { reportCode: panel.querySelector("#report-code").value };
     render(await api(button.dataset.action, body));
   } catch (error) {
     alert(error.message);
@@ -221,7 +287,7 @@ async function refreshState() {
   refreshInFlight = true;
   try {
     const state = await api();
-    if (document.activeElement?.id === "prompt-picker") {
+    if (["prompt-picker", "report-code"].includes(document.activeElement?.id)) {
       lastState = state;
       updateLiveStatus();
     } else {
@@ -233,6 +299,19 @@ async function refreshState() {
     refreshInFlight = false;
   }
 }
+
+panel.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && event.target.id === "report-code") {
+    event.preventDefault();
+    panel.querySelector('[data-action="start"]')?.click();
+  }
+});
+
+panel.addEventListener("toggle", (event) => {
+  if (!event.target.matches(".recovery-panel")) return;
+  recoveryOpen = event.target.open;
+  sessionStorage.setItem("obp-recovery-open", String(recoveryOpen));
+}, true);
 
 if (operatorKey) connect();
 setInterval(refreshState, 1000);

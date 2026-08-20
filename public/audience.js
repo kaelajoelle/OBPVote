@@ -1,6 +1,9 @@
 const card = document.querySelector("#vote-card");
 const storageKey = "obp-audience-id";
+const performanceCodeStorageKey = "obp-performance-code";
 let lastState = null;
+const codeFromLink = new URLSearchParams(location.search).get("code");
+let performanceCode = codeFromLink || localStorage.getItem(performanceCodeStorageKey) || "";
 let audienceId = localStorage.getItem(storageKey);
 if (!audienceId) {
   audienceId = crypto.randomUUID();
@@ -141,6 +144,23 @@ async function downloadJourney(state) {
 
 function render(state) {
   lastState = state;
+  if (state.status === "join") {
+    if (state.joinStatus === "waiting") {
+      card.innerHTML = `<p class="status">Stand by</p><h2>Tonight’s adventure hasn’t opened yet.</h2><p>Keep this page open. The performance code will be available from the Stage Manager.</p>`;
+      return;
+    }
+    const invalid = state.joinStatus === "invalid";
+    card.innerHTML = `
+      <p class="status ${invalid ? "warning" : ""}">${invalid ? "That code didn’t match" : "Join tonight’s performance"}</p>
+      <h2>Enter your adventure code.</h2>
+      <p>You’ll find it on the show QR or hear it announced in the theatre.</p>
+      <form class="join-code-form" data-join-form>
+        <label for="performance-code">Performance code</label>
+        <input id="performance-code" name="performance-code" type="text" maxlength="20" autocomplete="one-time-code" autocapitalize="characters" placeholder="Example: RUNE-A3F7" value="${escapeHtml(invalid ? "" : performanceCode)}" required />
+        <button type="submit">Join the adventure</button>
+      </form>`;
+    return;
+  }
   if (state.status === "revealed") {
     card.innerHTML = state.yourChoice ? `
       <p class="status success">Your choice</p>
@@ -188,8 +208,14 @@ function render(state) {
 
 async function refresh() {
   try {
-    const response = await fetch(`/api/state?audienceId=${encodeURIComponent(audienceId)}`, { cache: "no-store" });
-    render(await response.json());
+    const response = await fetch(`/api/state?audienceId=${encodeURIComponent(audienceId)}&code=${encodeURIComponent(performanceCode)}`, { cache: "no-store" });
+    const state = await response.json();
+    if (state.codeAccepted && performanceCode) {
+      localStorage.setItem(performanceCodeStorageKey, performanceCode);
+      if (codeFromLink) history.replaceState({}, "", location.pathname);
+    }
+    if (document.activeElement?.id === "performance-code") lastState = state;
+    else render(state);
   } catch {
     card.innerHTML = `<p class="status warning">Connection lost</p><h2>Stay on this page.</h2><p>We’ll try again automatically.</p>`;
   }
@@ -217,11 +243,36 @@ card.addEventListener("click", async (event) => {
   const response = await fetch("/api/vote", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ audienceId, optionId: button.dataset.optionId })
+    body: JSON.stringify({ audienceId, optionId: button.dataset.optionId, performanceCode })
   });
   const body = await response.json();
-  if (!response.ok) card.innerHTML = `<p class="status warning">${escapeHtml(body.error)}</p>`;
+  if (response.status === 403) {
+    performanceCode = "";
+    localStorage.removeItem(performanceCodeStorageKey);
+    render({ status: "join", joinStatus: "invalid", codeAccepted: false });
+  } else if (!response.ok) card.innerHTML = `<p class="status warning">${escapeHtml(body.error)}</p>`;
   else render(body);
+});
+
+card.addEventListener("submit", async (event) => {
+  const form = event.target.closest("[data-join-form]");
+  if (!form) return;
+  event.preventDefault();
+  const input = form.querySelector("#performance-code");
+  const button = form.querySelector("button");
+  performanceCode = input.value.trim();
+  try {
+    button.disabled = true;
+    const response = await fetch(`/api/state?audienceId=${encodeURIComponent(audienceId)}&code=${encodeURIComponent(performanceCode)}`, { cache: "no-store" });
+    const state = await response.json();
+    if (state.codeAccepted) {
+      localStorage.setItem(performanceCodeStorageKey, performanceCode);
+      history.replaceState({}, "", location.pathname);
+    }
+    render(state);
+  } catch {
+    card.innerHTML = `<p class="status warning">Connection lost</p><h2>Stay on this page.</h2><p>We’ll try again automatically.</p>`;
+  }
 });
 
 refresh();

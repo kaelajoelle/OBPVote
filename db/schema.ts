@@ -5,6 +5,9 @@ export const performanceSession = sqliteTable("performance_session", {
   currentPromptId: text("current_prompt_id"),
   status: text("status").notNull(),
   manualOutcomeId: text("manual_outcome_id"),
+  reportCode: text("report_code"),
+  audienceCode: text("audience_code"),
+  startedAt: integer("started_at"),
   historyJson: text("history_json").notNull().default("[]"),
   updatedAt: integer("updated_at").notNull()
 });
@@ -19,7 +22,11 @@ export const votes = sqliteTable("votes", {
 
 export const performanceArchive = sqliteTable("performance_archive", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  startedAt: integer("started_at"),
   endedAt: integer("ended_at").notNull(),
+  reportCode: text("report_code"),
+  audienceCode: text("audience_code"),
+  audienceDevices: integer("audience_devices").notNull().default(0),
   totalVotes: integer("total_votes").notNull(),
   historyJson: text("history_json").notNull()
 });

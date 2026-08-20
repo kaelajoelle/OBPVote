@@ -72,12 +72,25 @@ a { color: #f2d89f; }
 .save-note { margin: .65rem 0 0; text-align: center; font: .78rem/1.45 system-ui, sans-serif; opacity: .68; }
 .fine-print { font: .82rem/1.45 system-ui, sans-serif; opacity: .72; text-align: center; }
 .inline-control { display: flex; gap: .75rem; margin-top: .5rem; }
+.join-code-form { display: grid; gap: .7rem; margin-top: 1.4rem; }
+.join-code-form input { text-align: center; font: 900 1.35rem/1 system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+.join-code-form button { min-height: 3.5rem; }
 .operator-topline { display: flex; justify-content: space-between; gap: 1rem; font-family: system-ui, sans-serif; }
 .operator-command-bar { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(243,234,216,.15); }
 .operator-state-line { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin-top: .5rem; font-family: system-ui, sans-serif; }
 .operator-state-line > strong { font-size: .86rem; opacity: .76; }
 .mode-toggle { flex: 0 0 auto; padding: .65rem .8rem; }
 .connection-row { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1rem 0; }
+.performance-setup { margin-top: 1.5rem; padding: clamp(1rem, 3vw, 1.5rem); border: 1px solid rgba(213,170,88,.42); border-radius: .6rem; background: rgba(213,170,88,.07); }
+.performance-setup label { display: block; margin-top: 1.25rem; font: 800 .88rem/1.4 system-ui, sans-serif; }
+.performance-setup .fine-print { margin-bottom: 0; text-align: left; }
+.performance-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: .75rem; align-items: stretch; margin: 1rem 0 1.25rem; padding: .8rem; border: 1px solid rgba(213,170,88,.32); border-radius: .55rem; background: rgba(0,0,0,.18); }
+.performance-strip > div:not(.performance-strip-actions) { display: grid; gap: .2rem; align-content: center; min-width: 0; }
+.performance-strip span, .performance-meta { font: 750 .72rem/1.35 system-ui, sans-serif; letter-spacing: .05em; text-transform: uppercase; opacity: .72; }
+.performance-strip strong { overflow-wrap: anywhere; font: 850 .95rem/1.25 system-ui, sans-serif; }
+.performance-strip .audience-code { color: var(--gold); font-size: 1.15rem; letter-spacing: .08em; }
+.performance-strip-actions { display: flex; gap: .5rem; align-items: center; }
+.performance-strip-actions button { padding: .65rem .75rem; font-size: .78rem; }
 .connection-pill.unknown .connection-dot { background: #87918c; }
 .vote-timer { margin: 1rem 0; padding: .8rem 1rem; border-left: .3rem solid var(--gold); color: #f2d89f; background: rgba(213,170,88,.08); font: 900 1rem/1.3 system-ui, sans-serif; letter-spacing: .04em; }
 .cue-control { margin: 1.25rem 0 1.75rem; padding: 1rem; border: 1px solid rgba(213,170,88,.3); border-radius: .5rem; background: rgba(0,0,0,.18); }
@@ -117,6 +130,9 @@ a { color: #f2d89f; }
 .history-item li { display: flex; justify-content: space-between; gap: 1rem; font-size: .84rem; opacity: .78; }
 .badge { display: inline-block; padding: .15rem .4rem; border: 1px solid var(--burgundy); border-radius: 99rem; color: #f1c6d2; font-size: .7rem; vertical-align: middle; }
 .archive-run { margin-top: .6rem; padding: .7rem; border-top: 1px solid rgba(243,234,216,.12); }
+.performance-meta { display: flex; flex-wrap: wrap; gap: .45rem 1rem; margin: .65rem 0; }
+.report-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin: .8rem 0 1rem; }
+.report-actions button { padding: .65rem .8rem; font-size: .82rem; }
 .empty-note { font: .85rem/1.5 system-ui, sans-serif; opacity: .65; }
 .results-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(243,234,216,.15); font: .82rem/1.4 system-ui, sans-serif; }
 .results-section { margin-top: 1.5rem; }
@@ -158,6 +174,8 @@ a { color: #f2d89f; }
   .inline-control { flex-direction: column; }
   .operator-command-bar { align-items: stretch; flex-direction: column; }
   .mode-toggle { width: 100%; }
+  .performance-strip { grid-template-columns: 1fr 1fr; }
+  .performance-strip-actions { grid-column: 1 / -1; }
   .operator-brand, .stage-brand { align-items: flex-start; }
   .compact-logo { width: 5rem; }
   .quick-links { grid-template-columns: 1fr; }

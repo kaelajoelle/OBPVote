@@ -6,7 +6,7 @@ A lean web-based audience voting prototype for the **September 21 readthrough** 
 
 Included:
 
-- browser/QR audience join;
+- show-specific browser/QR audience join using a short performance code;
 - current-choice display and one vote per browser per round;
 - operator controls to open and close voting;
 - live result totals;
@@ -16,10 +16,12 @@ Included:
 - a downloadable PNG keepsake of the completed Tonight’s Path summary;
 - a read-only, auto-updating Stage Direction display with connection health and a final recap of the four main story decisions;
 - an operator Show Mode with connection health, a vote timer, explicit cue actions, and fallback guidance;
-- archived vote totals and manual-outcome tracking after each run;
+- a Stage Manager-entered show-report reference attached to each performance;
+- archived vote totals, participating-device counts, and manual-outcome tracking after each run;
+- copy-ready show-report summaries and downloadable CSV exports;
 - reset and manual fallback.
 
-Not included: accounts, payments, analytics beyond simple run totals, ticketing, long-term production reporting, simultaneous performances, or a script editor.
+Not included: accounts, payments, analytics beyond show voting summaries, ticketing, a full show-report authoring system, simultaneous performances, or a script editor.
 
 ## Prototype surfaces
 
@@ -35,12 +37,12 @@ The current scaffold implements these as audience, operator, Stage Direction, an
 
 | Page | Purpose | Access |
 | --- | --- | --- |
-| `/` | Audience voting, personal-choice confirmation, final Tonight’s Path summary, and PNG keepsake download | Public / QR |
-| `/operator.html` | Setup and simplified Show Mode for loading, opening, closing, resolving, revealing, advancing, and recovery | Show key |
+| `/` | Performance-code entry, audience voting, personal-choice confirmation, final Tonight’s Path summary, and PNG keepsake download | Public / show QR |
+| `/operator.html` | Performance setup plus simplified Show Mode for loading, opening, closing, resolving, revealing, advancing, and recovery | Show key |
 | `/stage.html` | Full-screen Stage Direction, script colour, page number, matching outline, connection health, and a final recap of Polls 3–6 | Show key |
-| `/results.html` | Current and archived run totals that refresh only on request | Show key |
+| `/results.html` | Current and archived totals with copy-ready summaries and CSV exports | Show key |
 
-The operator page links to **Results history** in a new tab. Its archived-run accordions stay open because the results page refreshes only when **Refresh results** is pressed. **Archive & reset** stores the completed run before returning the show to Poll 1.
+The operator page links to **Results history** in a new tab. Its archived-run accordions stay open because the results page refreshes only when **Refresh results** is pressed. **Archive & end performance** stores the completed run, expires its audience code, and returns the operator to performance setup.
 
 ## Run locally
 
@@ -62,17 +64,19 @@ If `OPERATOR_KEY` is omitted, local development uses `rehearsal`. The hosted dep
 
 ## Rehearsal flow
 
-1. The operator connects with the rehearsal key and displays the join QR/link.
-2. The operator loads the scripted poll needed for the next cue. Audience phones remain on standby.
-3. The operator opens the current vote on the stage cue.
-4. Audience members make one choice each.
+1. The operator connects with the rehearsal key and enters the Stage Manager’s show-report reference.
+2. The app starts the performance and creates its audience code, QR, and join link.
+3. Audience members scan the QR or enter the announced performance code once.
+4. The operator loads the scripted poll needed for the next cue. Audience phones remain on standby.
+5. The operator opens the current vote on the stage cue.
+6. Audience members make one choice each.
    - If the poll is not needed, the operator can press **Skip this poll** and confirm. No result is recorded.
-5. The operator closes voting and reads the totals.
-6. For a tie, empty vote, or manual fallback, choose an outcome.
-7. Press the outcome-specific **Reveal** button to update Stage Direction while each audience phone confirms only its own choice.
-8. Press the poll-specific **Advance** button when the performance is ready to continue.
-9. At story end, confirm Stage Direction changes to a full-screen **Tonight’s Path** showing the selected cast cues, script colours, and page numbers for Polls 3, 4, 5, and 6.
-10. At the end of a rehearsal or show, use **Archive & reset** to preserve the totals and manual-outcome record.
+7. The operator closes voting and reads the totals.
+8. For a tie, empty vote, or manual fallback, choose an outcome.
+9. Press the outcome-specific **Reveal** button to update Stage Direction while each audience phone confirms only its own choice.
+10. Press the poll-specific **Advance** button when the performance is ready to continue.
+11. At story end, confirm Stage Direction changes to a full-screen **Tonight’s Path** showing the selected cast cues, script colours, and page numbers for Polls 3, 4, 5, and 6.
+12. Use **Archive & end performance**, then copy the show-report summary or download the CSV from Results history.
 
 If audience voting fails while the operator remains connected, collect the choice in the room, close the vote, use **Use this outcome**, reveal, and continue. If the operator loses its connection, call the path manually, keep the last Stage Direction visible, and reconnect. The operator’s **Connection problem?** panel keeps these steps on screen. The visible join URL is the fallback if the external QR image service is unavailable.
 

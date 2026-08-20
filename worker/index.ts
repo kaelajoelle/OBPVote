@@ -13,7 +13,11 @@ interface SessionRow {
   current_prompt_id: string | null;
   status: SessionStatus;
   manual_outcome_id: string | null;
+  report_code: string | null;
+  audience_code: string | null;
+  started_at: number | null;
   history_json: string;
+  updated_at: number;
 }
 
 interface HistoryEntry {
@@ -26,7 +30,11 @@ interface HistoryEntry {
 
 interface ArchiveRow {
   id: number;
+  started_at: number | null;
   ended_at: number;
+  report_code: string | null;
+  audience_code: string | null;
+  audience_devices: number;
   total_votes: number;
   history_json: string;
 }
@@ -40,6 +48,9 @@ const sessionSchema = `CREATE TABLE IF NOT EXISTS performance_session (
   current_prompt_id TEXT,
   status TEXT NOT NULL,
   manual_outcome_id TEXT,
+  report_code TEXT,
+  audience_code TEXT,
+  started_at INTEGER,
   history_json TEXT NOT NULL DEFAULT '[]',
   updated_at INTEGER NOT NULL
 )`;
@@ -53,7 +64,11 @@ const voteSchema = `CREATE TABLE IF NOT EXISTS votes (
 
 const archiveSchema = `CREATE TABLE IF NOT EXISTS performance_archive (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  started_at INTEGER,
   ended_at INTEGER NOT NULL,
+  report_code TEXT,
+  audience_code TEXT,
+  audience_devices INTEGER NOT NULL DEFAULT 0,
   total_votes INTEGER NOT NULL,
   history_json TEXT NOT NULL
 )`;
@@ -64,6 +79,8 @@ const displayHeartbeatSchema = `CREATE TABLE IF NOT EXISTS display_heartbeat (
 )`;
 
 const stageRecapPollNumbers = new Set(["3", "4", "5", "6"]);
+const audienceCodeWords = ["BARD", "RUNE", "QUEST", "SHIELD", "DRAGON", "CARAVAN", "EMBER", "LEGEND"];
+const audienceCodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function json(body: unknown, status = 200) {
   return Response.json(body, { status, headers: { "cache-control": "no-store" } });
@@ -71,6 +88,22 @@ function json(body: unknown, status = 200) {
 
 function promptById(promptId: string | null | undefined) {
   return story.prompts.find((prompt) => prompt.id === promptId) ?? null;
+}
+
+function normalizeAudienceCode(value: string | null | undefined) {
+  return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function audienceCodeMatches(expected: string | null, supplied: string | null | undefined) {
+  return Boolean(expected) && normalizeAudienceCode(expected) === normalizeAudienceCode(supplied);
+}
+
+function generateAudienceCode() {
+  const random = new Uint8Array(5);
+  crypto.getRandomValues(random);
+  const word = audienceCodeWords[random[0] % audienceCodeWords.length];
+  const suffix = Array.from(random.slice(1), (value) => audienceCodeAlphabet[value % audienceCodeAlphabet.length]).join("");
+  return `${word}-${suffix}`;
 }
 
 function parseHistory(value: string): HistoryEntry[] {
@@ -174,18 +207,33 @@ function winnerId(results: Record<string, number>, manualOutcomeId: string | nul
 
 async function getArchives(env: Env) {
   const rows = await env.DB.prepare(
-    "SELECT id, ended_at, total_votes, history_json FROM performance_archive ORDER BY id DESC LIMIT 20"
+    `SELECT id, started_at, ended_at, report_code, audience_code, audience_devices,
+      total_votes, history_json FROM performance_archive ORDER BY id DESC LIMIT 20`
   ).all<ArchiveRow>();
   return rows.results.map((row) => ({
     id: row.id,
+    startedAt: row.started_at,
     endedAt: row.ended_at,
+    reportCode: row.report_code,
+    audienceCode: row.audience_code,
+    audienceDevices: Number(row.audience_devices || 0),
     totalVotes: row.total_votes,
     history: enrichHistory(parseHistory(row.history_json))
   }));
 }
 
-async function publicState(env: Env, audienceId: string | null) {
+async function publicState(env: Env, audienceId: string | null, suppliedCode: string | null) {
   const session = await getSession(env);
+  if (!session.audience_code) {
+    return { status: "join", joinStatus: "waiting", codeAccepted: false };
+  }
+  if (!audienceCodeMatches(session.audience_code, suppliedCode)) {
+    return {
+      status: "join",
+      joinStatus: suppliedCode ? "invalid" : "code-required",
+      codeAccepted: false
+    };
+  }
   const prompt = promptById(session.current_prompt_id);
   const history = parseHistory(session.history_json);
   let yourChoice = null;
@@ -225,6 +273,7 @@ async function publicState(env: Env, audienceId: string | null) {
 
   return {
     status: session.status,
+    codeAccepted: true,
     prompt,
     hasVoted: Boolean(yourChoice),
     yourChoice,
@@ -276,6 +325,12 @@ async function operatorState(env: Env, origin: string) {
   const stageHeartbeat = await env.DB.prepare(
     "SELECT last_seen FROM display_heartbeat WHERE display_id = 'stage'"
   ).first<DisplayHeartbeatRow>();
+  const audienceDevices = await env.DB.prepare(
+    "SELECT COUNT(DISTINCT audience_id) AS total FROM votes"
+  ).first<{ total: number }>();
+  const joinUrl = session.audience_code
+    ? `${origin}/?code=${encodeURIComponent(session.audience_code)}`
+    : origin;
   return {
     status: session.status,
     prompt,
@@ -287,10 +342,18 @@ async function operatorState(env: Env, origin: string) {
     statusSince: session.updated_at,
     serverTime: Date.now(),
     stageLastSeen: stageHeartbeat?.last_seen ?? null,
-    joinUrl: origin,
+    joinUrl,
+    publicUrl: origin,
     stageUrl: `${origin}/stage.html`,
     resultsUrl: `${origin}/results.html`,
     history: enrichHistory(history),
+    performance: {
+      started: Boolean(session.report_code && session.audience_code),
+      reportCode: session.report_code,
+      audienceCode: session.audience_code,
+      startedAt: session.started_at,
+      audienceDevices: Number(audienceDevices?.total || 0)
+    },
     archives: await getArchives(env),
     prompts: story.prompts.map((item) => ({
       id: item.id,
@@ -311,12 +374,44 @@ function operatorIsAuthorized(request: Request, env: Env) {
   return request.headers.get("x-operator-key") === (env.OPERATOR_KEY || "rehearsal");
 }
 
+async function archiveAndResetPerformance(env: Env, session: SessionRow, now: number) {
+  const history = parseHistory(session.history_json);
+  const statements = [];
+  if (history.length) {
+    const audienceDevices = await env.DB.prepare(
+      "SELECT COUNT(DISTINCT audience_id) AS total FROM votes"
+    ).first<{ total: number }>();
+    statements.push(env.DB.prepare(
+      `INSERT INTO performance_archive
+        (started_at, ended_at, report_code, audience_code, audience_devices, total_votes, history_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      session.started_at,
+      now,
+      session.report_code,
+      session.audience_code,
+      Number(audienceDevices?.total || 0),
+      historyVoteTotal(history),
+      JSON.stringify(history)
+    ));
+  }
+  statements.push(
+    env.DB.prepare("DELETE FROM votes"),
+    env.DB.prepare(`UPDATE performance_session
+      SET current_prompt_id = ?, status = 'ready', manual_outcome_id = NULL,
+        report_code = NULL, audience_code = NULL, started_at = NULL,
+        history_json = '[]', updated_at = ? WHERE id = 1`)
+      .bind(story.startPromptId, now)
+  );
+  await env.DB.batch(statements);
+}
+
 async function handleApi(request: Request, env: Env) {
   await ensureDatabase(env);
   const url = new URL(request.url);
 
   if (request.method === "GET" && url.pathname === "/api/state") {
-    return json(await publicState(env, url.searchParams.get("audienceId")));
+    return json(await publicState(env, url.searchParams.get("audienceId"), url.searchParams.get("code")));
   }
 
   if (request.method === "GET" && url.pathname === "/api/stage/state") {
@@ -328,6 +423,9 @@ async function handleApi(request: Request, env: Env) {
     const body = await readBody(request);
     const session = await getSession(env);
     const prompt = promptById(session.current_prompt_id);
+    if (!audienceCodeMatches(session.audience_code, body.performanceCode)) {
+      return json({ error: "Enter the audience code for this performance." }, 403);
+    }
     if (session.status !== "open" || !prompt) return json({ error: "Voting is closed." }, 400);
     if (!body.audienceId || body.audienceId.length > 100) return json({ error: "A valid audience ID is required." }, 400);
     if (!prompt.options.some((option) => option.id === body.optionId)) return json({ error: "That choice is not available." }, 400);
@@ -340,7 +438,7 @@ async function handleApi(request: Request, env: Env) {
       }
       throw error;
     }
-    return json(await publicState(env, body.audienceId), 201);
+    return json(await publicState(env, body.audienceId, body.performanceCode), 201);
   }
 
   if (!url.pathname.startsWith("/api/operator/")) return json({ error: "Not found." }, 404);
@@ -354,7 +452,31 @@ async function handleApi(request: Request, env: Env) {
   const prompt = promptById(session.current_prompt_id);
   const now = Date.now();
 
-  if (action === "open") {
+  if (action === "start") {
+    const reportCode = String(body.reportCode || "").trim();
+    const history = parseHistory(session.history_json);
+    if (reportCode.length < 2 || reportCode.length > 80) {
+      return json({ error: "Enter a show-report reference between 2 and 80 characters." }, 400);
+    }
+    if (history.length || !["ready", "complete"].includes(session.status)) {
+      return json({ error: "Archive and end the current performance before starting another one." }, 400);
+    }
+    if (session.audience_code || session.report_code) {
+      return json({ error: "This performance has already been started." }, 400);
+    }
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM votes"),
+      env.DB.prepare(`UPDATE performance_session
+        SET current_prompt_id = ?, status = 'ready', manual_outcome_id = NULL,
+          report_code = ?, audience_code = ?, started_at = ?, history_json = '[]', updated_at = ?
+        WHERE id = 1`)
+        .bind(story.startPromptId, reportCode, generateAudienceCode(), now, now)
+    ]);
+  } else if (action === "reset") {
+    await archiveAndResetPerformance(env, session, now);
+  } else if (!session.audience_code || !session.report_code) {
+    return json({ error: "Start a performance before using show controls." }, 400);
+  } else if (action === "open") {
     if (!prompt) return json({ error: "There is no current choice to open." }, 400);
     await env.DB.batch([
       env.DB.prepare("DELETE FROM votes WHERE prompt_id = ?").bind(prompt.id),
@@ -413,21 +535,6 @@ async function handleApi(request: Request, env: Env) {
         SET current_prompt_id = ?, status = ?, manual_outcome_id = NULL, updated_at = ? WHERE id = 1`)
         .bind(nextPrompt?.id ?? null, nextPrompt ? "ready" : "complete", now)
     ]);
-  } else if (action === "reset") {
-    const history = parseHistory(session.history_json);
-    const statements = [];
-    if (history.length) {
-      statements.push(env.DB.prepare(
-        "INSERT INTO performance_archive (ended_at, total_votes, history_json) VALUES (?, ?, ?)"
-      ).bind(now, historyVoteTotal(history), JSON.stringify(history)));
-    }
-    statements.push(
-      env.DB.prepare("DELETE FROM votes"),
-      env.DB.prepare(`UPDATE performance_session
-        SET current_prompt_id = ?, status = 'ready', manual_outcome_id = NULL, history_json = '[]', updated_at = ? WHERE id = 1`)
-        .bind(story.startPromptId, now)
-    );
-    await env.DB.batch(statements);
   } else {
     return json({ error: "Unknown operator action." }, 404);
   }
