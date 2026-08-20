@@ -45,14 +45,14 @@ test("audience sees the chosen result only after the operator reveals it", () =>
   session.close();
   assert.deepEqual(session.publicState("a").yourChoice, {
     id: "hag",
-    label: "Flamespun Ruins — the Hag"
+    label: "Flamespun Ruins — The Hag"
   });
   assert.equal(session.publicState("a").revealedOutcome, null);
   assert.equal(session.publicState("a").revealedResults, null);
   session.reveal();
   assert.deepEqual(session.publicState("a").revealedOutcome, {
     id: "hag",
-    label: "Flamespun Ruins — the Hag"
+    label: "Flamespun Ruins — The Hag"
   });
   assert.deepEqual(session.publicState("a").revealedResults, {
     enchantress: 0,

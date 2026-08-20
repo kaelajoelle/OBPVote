@@ -23,11 +23,13 @@ function render(state) {
   const direction = state.direction;
   display.innerHTML = direction ? `
     <section class="stage-direction" style="--stage-accent:${escapeHtml(direction.stageColor)}">
+      <p class="stage-screen-header">Stage Direction</p>
       <h2 class="stage-choice">${escapeHtml(direction.stageLabel)}</h2>
       ${direction.scriptColor ? `<p class="script-colour">${escapeHtml(direction.scriptColor)}</p>` : ""}
       <p class="script-page">Page ${escapeHtml(direction.pageNumber)}</p>
     </section>` : `
     <section class="stage-direction waiting">
+      <p class="stage-screen-header">Stage Direction</p>
       <p class="status">Stand by</p>
       <h2 class="stage-choice">Waiting for result</h2>
     </section>`;
