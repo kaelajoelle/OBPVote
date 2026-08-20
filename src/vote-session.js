@@ -100,11 +100,8 @@ export class VoteSession {
   }
 
   publicState(audienceId = null) {
-    const winnerId = this.status === "revealed" ? this.winnerId() : null;
-    const revealedOutcome = winnerId ? this.prompt.options.find((option) => option.id === winnerId) : null;
     const yourChoiceId = audienceId ? this.votes.get(audienceId) : null;
     const yourChoice = yourChoiceId ? this.prompt?.options.find((option) => option.id === yourChoiceId) : null;
-    const revealedResults = this.status === "revealed" ? this.results() : null;
     const journeyResults = this.status === "complete" ? this.history.map((entry) => {
       const prompt = this.story.prompts.find((item) => item.id === entry.promptId);
       const audienceChoice = prompt?.options.find((option) => option.id === entry.winnerId);
@@ -125,9 +122,6 @@ export class VoteSession {
       prompt: this.prompt,
       hasVoted: Boolean(yourChoice),
       yourChoice: yourChoice ? { id: yourChoice.id, label: yourChoice.label } : null,
-      revealedOutcome: revealedOutcome ? { id: revealedOutcome.id, label: revealedOutcome.label } : null,
-      revealedResults,
-      totalVotes: revealedResults ? this.votes.size : null,
       journeyResults
     };
   }

@@ -38,7 +38,7 @@ test("manual outcome resolves a tie and is recorded", () => {
   assert.equal(session.history[0].manual, true);
 });
 
-test("audience sees the chosen result only after the operator reveals it", () => {
+test("audience sees only their own choice after the operator reveals it", () => {
   const session = new VoteSession(story);
   session.open();
   session.castVote("a", "hag");
@@ -47,18 +47,15 @@ test("audience sees the chosen result only after the operator reveals it", () =>
     id: "hag",
     label: "Flamespun Ruins — The Hag"
   });
-  assert.equal(session.publicState("a").revealedOutcome, null);
-  assert.equal(session.publicState("a").revealedResults, null);
   session.reveal();
-  assert.deepEqual(session.publicState("a").revealedOutcome, {
+  const revealedState = session.publicState("a");
+  assert.deepEqual(revealedState.yourChoice, {
     id: "hag",
     label: "Flamespun Ruins — The Hag"
   });
-  assert.deepEqual(session.publicState("a").revealedResults, {
-    enchantress: 0,
-    hag: 1
-  });
-  assert.equal(session.publicState("a").totalVotes, 1);
+  assert.equal("revealedOutcome" in revealedState, false);
+  assert.equal("revealedResults" in revealedState, false);
+  assert.equal("totalVotes" in revealedState, false);
 });
 
 test("contains the eight numbered script polls plus the conditional 4.5 vote", () => {

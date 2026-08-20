@@ -185,18 +185,6 @@ async function publicState(env: Env, audienceId: string | null) {
     if (selected) yourChoice = { id: selected.id, label: selected.label };
   }
 
-  let revealedOutcome = null;
-  let revealedResults = null;
-  let totalVotes = null;
-  if (session.status === "revealed" && prompt) {
-    const results = await getResults(env, prompt.id);
-    const selectedId = winnerId(results, session.manual_outcome_id);
-    const selected = prompt.options.find((option) => option.id === selectedId);
-    if (selected) revealedOutcome = { id: selected.id, label: selected.label };
-    revealedResults = results;
-    totalVotes = Object.values(results).reduce((total, count) => total + count, 0);
-  }
-
   let journeyResults = null;
   if (session.status === "complete") {
     const completedChoices = new Map<string, string>();
@@ -228,9 +216,6 @@ async function publicState(env: Env, audienceId: string | null) {
     prompt,
     hasVoted: Boolean(yourChoice),
     yourChoice,
-    revealedOutcome,
-    revealedResults,
-    totalVotes,
     journeyResults
   };
 }

@@ -10,31 +10,17 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" })[character]);
 }
 
-function percentage(count, total) {
-  return total > 0 ? Math.round((count / total) * 100) : 0;
-}
-
 function render(state) {
-  if (state.status === "revealed" && state.revealedOutcome) {
-    const totalVotes = Number(state.totalVotes || 0);
-    const winnerCount = Number(state.revealedResults?.[state.revealedOutcome.id] || 0);
-    const matched = state.yourChoice?.id === state.revealedOutcome.id;
-    card.innerHTML = `
-      <p class="status success">The audience has chosen</p>
-      <div class="choice-comparison">
-        <div class="comparison-card">
-          <span>Your choice</span>
-          <h2>${escapeHtml(state.yourChoice?.label || "No vote recorded")}</h2>
-        </div>
-        <div class="comparison-card audience-winner">
-          <span>Audience choice</span>
-          <h2>${escapeHtml(state.revealedOutcome.label)}</h2>
-          <strong>${percentage(winnerCount, totalVotes)}%</strong>
-          <small>${winnerCount} of ${totalVotes} votes</small>
-        </div>
+  if (state.status === "revealed") {
+    card.innerHTML = state.yourChoice ? `
+      <p class="status success">Your choice</p>
+      <div class="result-reveal">
+        <span>You chose</span>
+        <h2>${escapeHtml(state.yourChoice.label)}</h2>
       </div>
-      ${state.yourChoice ? `<p class="match-note">${matched ? "Your choice matched the audience." : "The adventure follows the audience’s choice."}</p>` : ""}
-      <p>Watch the stage as your choice becomes part of the story.</p>`;
+      <p>Eyes back to the stage—the path continues now.</p>` : `
+      <p class="status">The path is chosen</p>
+      <h2>Eyes back to the stage.</h2>`;
     return;
   }
   if (state.status === "complete") {
