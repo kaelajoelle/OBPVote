@@ -26,7 +26,7 @@
 - Complete the story and confirm Stage Direction replaces the last cue with a full-screen Tonight’s Path containing only the selected cues, script colours, and page numbers for Polls 3, 4, 5, and 6.
 - Confirm audience phones show only the final-bows message when the story completes, with no full journey or percentages.
 - After the bows, press **Release post-show journey** and confirm audience phones reveal the complete personal journey, comparison bars, and percentages.
-- Press **Save my path** on an iPhone and Android phone. Confirm the PNG is 1080 × 1920 and includes the OBP logo, performance date, inactive show code, four defining choices, audience comparisons, a stable script quote, and `obpmusical.com`.
+- Press **Save what was** on an iPhone and Android phone. Confirm the PNG is 1080 × 1920 and includes the OBP logo, performance date, inactive show code, four defining choices, audience comparisons, a stable script quote, and `obpmusical.com`.
 - Download the keepsake twice from one phone and confirm the same quote appears both times.
 - Confirm **Archive & end performance** warns that audience access and downloads will end; allow time for post-show saving before archiving.
 

@@ -5,7 +5,7 @@ export const story = {
       id: "poll-1-opening-location",
       pollNumber: "1",
       operatorLabel: "Opening location",
-      title: "Where should we begin?",
+      title: "Where shall we begin?",
       question: "Choose Wisely.",
       options: [
         { id: "enchantress", label: "Glade of Paranor — The Enchantress", nextPromptId: "poll-2-song", scriptColor: "BLOSSOM", stageColor: "#d989a6", stageLabel: "ENCHANTRESS", pageNumber: 10, stageDirection: "Follow the Glade of Paranor branch" },
@@ -17,7 +17,7 @@ export const story = {
       pollNumber: "2",
       operatorLabel: "Anaax or Kytius song",
       title: "Who should perform?",
-      question: "Choose the Companions’ storyteller.",
+      question: "Choose your storyteller.",
       options: [
         { id: "armour-class", label: "Anaax — A bard of great renown", nextPromptId: "poll-3-initiative", scriptColor: "TANGERINE", stageColor: "#ff9900", stageLabel: "ANAAX", pageNumber: 23, stageDirection: "Continue with “Armour Class” — Anaax" },
         { id: "hero-of-the-realm", label: "Kytius — Just Kytius", nextPromptId: "poll-3-initiative", scriptColor: "CORAL", stageColor: "#e06666", stageLabel: "KYTIUS", pageNumber: 25, stageDirection: "Continue with “Hero of the Realm” — Kytius" }
@@ -27,8 +27,8 @@ export const story = {
       id: "poll-3-initiative",
       pollNumber: "3",
       operatorLabel: "Kytius’s initiative",
-      title: "What traits do we admire in our heroes?",
-      question: "",
+      title: "The Queen leaves it to you…",
+      question: "What traits do we admire in our heroes?",
       options: [
         { id: "initiative", label: "Reward his initiative", nextPromptId: "poll-4-coin-purse", scriptColor: "RED", stageColor: "#cc0000", stageLabel: "INITIATIVE", pageNumber: 43, stageDirection: "Continue with the Initiative branch" },
         { id: "lesson", label: "Teach him a lesson", nextPromptId: "poll-4-coin-purse", scriptColor: "BLUE", stageColor: "#1155cc", stageLabel: "TEACH HIM A LESSON", pageNumber: 45, stageDirection: "Continue with the Teach Him a Lesson branch" }
@@ -41,8 +41,8 @@ export const story = {
       title: "An orc reaches for a battle horn.",
       question: "What should Khulgar do?",
       options: [
-        { id: "coin-purse", label: "Pick up the coin purse", nextPromptId: "poll-4-5-vial", scriptColor: "BLACK", stageColor: "#000000", stageLabel: "RING", pageNumber: 55, stageDirection: "Khulgar has the ring" },
-        { id: "run-to-camp", label: "Don’t chance it", nextPromptId: "poll-4-5-vial", scriptColor: "BLACK", stageColor: "#000000", stageLabel: "NO RING", pageNumber: 55, stageDirection: "Khulgar does not have the ring" }
+        { id: "coin-purse", label: "Pick up the tattered coin purse", nextPromptId: "poll-4-5-vial", scriptColor: "BLACK", stageColor: "#000000", stageLabel: "RING", pageNumber: 55, stageDirection: "Khulgar has the ring" },
+        { id: "run-to-camp", label: "Run and warn the others", nextPromptId: "poll-4-5-vial", scriptColor: "BLACK", stageColor: "#000000", stageLabel: "NO RING", pageNumber: 55, stageDirection: "Khulgar does not have the ring" }
       ]
     },
     {
@@ -62,7 +62,7 @@ export const story = {
       pollNumber: "5",
       operatorLabel: "The captive’s fate",
       title: "The captive’s fate is in your hands.",
-      question: "What should happen to him?",
+      question: "What is your judgement?",
       options: [
         { id: "lives", label: "He Lives", nextPromptId: "poll-6-caravan", scriptColor: "PURPLE", stageColor: "#704b91", stageLabel: "HE LIVES", pageNumber: 62, stageDirection: "Follow the He Lives branch" },
         { id: "dies", label: "He Dies", nextPromptId: "poll-6-caravan", scriptColor: "GREEN", stageColor: "#3b7a57", stageLabel: "HE DIES", pageNumber: 62, stageDirection: "Follow the He Dies branch" }
@@ -83,7 +83,7 @@ export const story = {
       id: "poll-7-stories",
       pollNumber: "7",
       operatorLabel: "Companion story",
-      title: "One Companion will tell their story.",
+      title: "One Companion will tell their Truth.",
       question: "Whose story should the Caravan hear?",
       options: [
         { id: "eris", label: "Eris", nextPromptId: "poll-8-song", scriptColor: "BRIGHT GREEN", stageColor: "#73b35a", stageLabel: "ERIS", pageNumber: 93, stageDirection: "Continue with Eris’s story" },
@@ -96,8 +96,8 @@ export const story = {
       id: "poll-8-song",
       pollNumber: "8",
       operatorLabel: "Final song choice",
-      title: "Choose the tale that becomes a song.",
-      question: "Which song should Anaax sing?",
+      title: "The townsfolk decide…",
+      question: "What should Anaax sing about?",
       options: [
         { id: "loss-and-love", label: "“Loss and Love”", nextPromptId: null, scriptColor: "GREY", stageColor: "#bebfc5", stageLabel: "HOW DO YOU WANT TO DO THIS", pageNumber: 107, stageDirection: "Continue with “How Do You Want To Do This?”" },
         { id: "love-and-loss", label: "“Love and Loss”", nextPromptId: null, scriptColor: "BURGUNDY", stageColor: "#660000", stageLabel: "LA DITTY HEY", pageNumber: 109, stageDirection: "Continue with “La Ditty Hey”" }
